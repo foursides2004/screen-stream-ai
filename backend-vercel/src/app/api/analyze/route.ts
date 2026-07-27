@@ -41,7 +41,7 @@ export async function POST(request: Request) {
     }
 
     const result = streamText({
-      model: openrouter(MODEL),
+      model: openrouter(MODEL) as any,
       messages: [
         {
           role: 'system',
@@ -60,7 +60,7 @@ export async function POST(request: Request) {
       headers: OPENROUTER_HEADERS,
     });
 
-    return result.toDataStreamResponse();
+    return (await result).toDataStreamResponse();
   } catch (error) {
     console.error('Analyze error:', error);
     return new Response(

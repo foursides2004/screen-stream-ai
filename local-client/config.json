@@ -1,5 +1,5 @@
 {
-  "apiBaseUrl": "https://backend-vercel-j1ci17vhq-gids-tean.vercel.app",
+  "apiBaseUrl": "https://backend-vercel-ochre-iota.vercel.app",
   "apiEndpoint": "/api/analyze",
   "secretKey": "bd29d77cf93f715e436535aa7fdca3fb0b34d141744108bfbddc2dc9a27f78d9",
   "monitorIndex": 1,
