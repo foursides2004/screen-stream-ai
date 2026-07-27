@@ -1,0 +1,23 @@
+{
+  "apiBaseUrl": "http://localhost:3000",
+  "apiEndpoint": "/api/analyze",
+  "secretKey": "bd29d77cf93f715e436535aa7fdca3fb0b34d141744108bfbddc2dc9a27f78d9",
+  "monitorIndex": 1,
+  "captureHotkey": "ctrl+alt+s",
+  "quitHotkey": "ctrl+alt+q",
+  "toggleAutoCaptureHotkey": "ctrl+alt+a",
+  "cycleModeHotkey": "ctrl+alt+m",
+  "maxWidth": 1920,
+  "imageQuality": 80,
+  "imageFormat": "webp",
+  "requestTimeout": 30,
+  "retryAttempts": 3,
+  "retryDelay": 1000,
+  "captureInterval": 10,
+  "autoCapture": true,
+  "captureMode": "window",
+  "targetWindowTitle": "Screenshot 2026-06-26 082335.png",
+  "deduplicationEnabled": true,
+  "deduplicationThreshold": 0.95,
+  "dashboardWsEndpoint": "/api/ws"
+}
