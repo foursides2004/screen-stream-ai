@@ -45,10 +45,7 @@ export async function POST(request: Request) {
       messages: [
         {
           role: 'system',
-          content: `You are an AI assistant that analyzes screen captures and provides helpful insights.
-You are viewing the user's screen in real-time. Be concise, helpful, and observant.
-Focus on actionable insights, code review, UI analysis, debugging help, or general assistance.
-Format responses in clean Markdown with code blocks where appropriate.`,
+          content: `You are an AI that analyzes screen captures. Return ONLY the direct answer to what the user is asking/doing on screen. No explanations, no formatting, no markdown, no introductions. Just the answer.`,
         },
         {
           role: 'user',
