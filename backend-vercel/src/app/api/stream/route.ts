@@ -1,6 +1,16 @@
-import { addSSEClient, removeSSEClient } from '../ws/route';
-
 export const runtime = 'edge';
+
+const sseClients = new Set<ReadableStreamDefaultController>();
+
+function addSSEClient(controller: ReadableStreamDefaultController) {
+  sseClients.add(controller);
+  console.log(`[SSE] Client connected (total: ${sseClients.size})`);
+}
+
+function removeSSEClient(controller: ReadableStreamDefaultController) {
+  sseClients.delete(controller);
+  console.log(`[SSE] Client disconnected (total: ${sseClients.size})`);
+}
 
 export async function GET() {
   const encoder = new TextEncoder();
