@@ -23,10 +23,14 @@ interface AnalyzeRequest {
 
 export async function POST(request: Request) {
   try {
-    // Use request.json() directly for edge runtime
+    // Get the raw text and log it for debugging
+    const text = await request.text();
+    console.log('[DEBUG] Raw request text length:', text.length);
+    console.log('[DEBUG] Raw request text:', text);
+
     let body: AnalyzeRequest;
     try {
-      body = await request.json();
+      body = JSON.parse(text);
     } catch (e) {
       console.error('[DEBUG] JSON parse error:', e);
       return new Response(
