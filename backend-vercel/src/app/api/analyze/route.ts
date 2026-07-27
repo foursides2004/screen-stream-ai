@@ -1,9 +1,9 @@
 export const runtime = 'edge';
 
 import { streamText } from 'ai';
-import OpenAI from 'openai';
+import { createOpenAI } from '@ai-sdk/openai';
 
-const openrouter = new OpenAI({
+const openrouter = createOpenAI({
   baseURL: process.env.OPENROUTER_BASE_URL || 'https://openrouter.ai/api/v1',
   apiKey: process.env.OPENROUTER_API_KEY,
 });
