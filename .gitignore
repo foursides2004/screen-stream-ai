@@ -56,3 +56,5 @@ backend-vercel/tsconfig.tsbuildinfo
 *.tmp
 *.temp
 .cache
+.vercel
+.env*
