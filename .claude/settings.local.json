@@ -1,0 +1,48 @@
+{
+  "env": {
+    "ANTHROPIC_BASE_URL": "https://openrouter.ai/api",
+    "ANTHROPIC_AUTH_TOKEN": "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",
+    "ANTHROPIC_API_KEY": "",
+    "ANTHROPIC_DEFAULT_OPUS_MODEL": "nvidia/nemotron-3-ultra-550b-a55b:free",
+    "ANTHROPIC_DEFAULT_SONNET_MODEL": "nvidia/nemotron-3-ultra-550b-a55b:free",
+    "ANTHROPIC_DEFAULT_HAIKU_MODEL": "nvidia/nemotron-3-ultra-550b-a55b:free"
+  },
+  "permissions": {
+    "allow": [
+      "Bash(*)",
+      "PowerShell(*)",
+      "Bash(python main.py)",
+      "Bash(python -c \"from config.settings import settings; print\\(settings.ocr_engine\\)\")",
+      "Bash(python -c \"from config.settings import reload_settings; s = reload_settings\\(\\); print\\(s.ocr_engine\\)\")",
+      "Bash(python -c \"import os; print\\(os.getenv\\('OCR_ENGINE', 'NOT_SET'\\)\\)\")",
+      "PowerShell(choco install *)",
+      "PowerShell(winget install *)",
+      "Bash(python list_models.py)",
+      "Bash(python -c ' *)",
+      "Bash(npm run *)",
+      "Bash(node *)",
+      "Bash(curl -s http://localhost:3000/api/health)",
+      "Bash(curl -s http://localhost:3000/api/stream)",
+      "Bash(curl -s -N http://localhost:3000/api/stream)",
+      "Bash(curl -s -X POST http://localhost:3000/api/analyze -H 'Content-Type: application/json' -d '{\"image\":\"data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mNk+M9QDwADhgGAWjR9awAAAABJRU5ErkJggg==\",\"secretKey\":\"bd29d77cf93f715e436535aa7fdca3fb0b34d141744108bfbddc2dc9a27f78d9\"}')",
+      "Bash(curl -v -X POST http://localhost:3000/api/analyze -H 'Content-Type: application/json' -d '{\"image\":\"data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mNk+M9QDwADhgGAWjR9awAAAABJRU5ErkJggg==\",\"secretKey\":\"bd29d77cf93f715e436535aa7fdca3fb0b34d141744108bfbddc2dc9a27f78d9\"}')",
+      "Bash(curl -s -X POST https://openrouter.ai/api/v1/chat/completions -H 'Content-Type: application/json' -H 'Authorization: Bearer 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' -H 'HTTP-Referer: http://localhost:3000' -H 'X-Title: Screen Stream AI Assistant' -d '{\"model\":\"openai/gpt-4o-mini\",\"messages\":[{\"role\":\"user\",\"content\":[{\"type\":\"text\",\"text\":\"What is in this image?\"},{\"type\":\"image_url\",\"image_url\":{\"url\":\"data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mNk+M9QDwADhgGAWjR9awAAAABJRU5ErkJggg==\"}}]}],\"max_tokens\":100}')",
+      "Bash(curl -s -X POST https://openrouter.ai/api/v1/chat/completions -H 'Content-Type: application/json' -H 'Authorization: Bearer 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' -H 'HTTP-Referer: http://localhost:3000' -H 'X-Title: Screen Stream AI Assistant' -d '{\"model\":\"google/gemini-flash-1.5\",\"messages\":[{\"role\":\"user\",\"content\":[{\"type\":\"text\",\"text\":\"What is in this image?\"},{\"type\":\"image_url\",\"image_url\":{\"url\":\"data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mNk+M9QDwADhgGAWjR9awAAAABJRU5ErkJggg==\"}}]}],\"max_tokens\":100}')",
+      "Bash(curl -s -X POST https://openrouter.ai/api/v1/chat/completions -H 'Content-Type: application/json' -H 'Authorization: Bearer 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' -H 'HTTP-Referer: http://localhost:3000' -H 'X-Title: Screen Stream AI Assistant' -d '{\"model\":\"google/gemini-flash-1.5-8b\",\"messages\":[{\"role\":\"user\",\"content\":[{\"type\":\"text\",\"text\":\"What is in this image?\"},{\"type\":\"image_url\",\"image_url\":{\"url\":\"data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mNk+M9QDwADhgGAWjR9awAAAABJRU5ErkJggg==\"}}]}],\"max_tokens\":100}')",
+      "Bash(curl -s https://openrouter.ai/api/v1/models)",
+      "Bash(python3 -c ' *)",
+      "Bash(curl -s -X POST https://openrouter.ai/api/v1/chat/completions -H 'Content-Type: application/json' -H 'Authorization: Bearer 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' -H 'HTTP-Referer: http://localhost:3000' -H 'X-Title: Screen Stream AI Assistant' -d '{\"model\":\"google/gemini-3.5-flash-lite\",\"messages\":[{\"role\":\"user\",\"content\":[{\"type\":\"text\",\"text\":\"What is in this image?\"},{\"type\":\"image_url\",\"image_url\":{\"url\":\"data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mNk+M9QDwADhgGAWjR9awAAAABJRU5ErkJggg==\"}}]}],\"max_tokens\":100}')",
+      "Bash(curl -s http://localhost:3000/dashboard)",
+      "Bash(pip install *)",
+      "Bash(python capture_agent.py --help)",
+      "Bash(python capture_agent.py)",
+      "Bash(pkill -f capture_agent)",
+      "Bash(python *)",
+      "Bash(**)",
+      "PowerShell(**)",
+      "WebSearch"
+    ]
+  },
+  "effortLevel": "high",
+  "theme": "dark"
+}
