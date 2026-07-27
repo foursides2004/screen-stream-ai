@@ -60,7 +60,7 @@ Format responses in clean Markdown with code blocks where appropriate.`,
       ],
       maxTokens: 2048,
       temperature: 0.3,
-      extraHeaders: OPENROUTER_HEADERS,
+      headers: OPENROUTER_HEADERS,
     });
 
     return result.toDataStreamResponse();
