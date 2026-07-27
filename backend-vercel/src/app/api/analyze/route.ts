@@ -25,12 +25,16 @@ export async function POST(request: Request) {
   try {
     // Use text() and parse manually for edge runtime compatibility
     const text = await request.text();
+    console.log('[DEBUG] Request text length:', text.length);
+    console.log('[DEBUG] Request text preview:', text.substring(0, 200));
+
     let body: AnalyzeRequest;
     try {
       body = JSON.parse(text);
-    } catch {
+    } catch (e) {
+      console.error('[DEBUG] JSON parse error:', e);
       return new Response(
-        JSON.stringify({ error: 'Invalid JSON body' }),
+        JSON.stringify({ error: 'Invalid JSON body', detail: String(e) }),
         { status: 400, headers: { 'Content-Type': 'application/json' } }
       );
     }
