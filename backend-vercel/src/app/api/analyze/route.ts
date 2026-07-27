@@ -23,7 +23,18 @@ interface AnalyzeRequest {
 
 export async function POST(request: Request) {
   try {
-    const body = await request.json() as AnalyzeRequest;
+    // Use text() and parse manually for edge runtime compatibility
+    const text = await request.text();
+    let body: AnalyzeRequest;
+    try {
+      body = JSON.parse(text);
+    } catch {
+      return new Response(
+        JSON.stringify({ error: 'Invalid JSON body' }),
+        { status: 400, headers: { 'Content-Type': 'application/json' } }
+      );
+    }
+
     const { image, secretKey } = body;
 
     if (!secretKey || secretKey !== APP_SECRET) {
