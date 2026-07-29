@@ -94,7 +94,6 @@ export default function DashboardPage() {
   const [lastCapture, setLastCapture] = useState<string | null>(null);
   const eventSourceRef = useRef<EventSource | null>(null);
   const currentMessageRef = useRef<AnalysisMessage | null>(null);
-  const latestContentRef = useRef<string>('');
 
   const connectToStream = useCallback(() => {
     if (eventSourceRef.current) {
@@ -175,44 +174,15 @@ export default function DashboardPage() {
     };
   }, []);
 
-  // Poll /api/latest as fallback for missed updates
-  const pollLatest = useCallback(async () => {
-    try {
-      const res = await fetch('/api/latest');
-      if (!res.ok) return;
-      const data = await res.json();
-      if (data.type === 'analysis' && data.content && data.content !== latestContentRef.current) {
-        latestContentRef.current = data.content;
-        // If we're not currently streaming, add as new complete message
-        if (!isAnalyzing && !currentMessageRef.current) {
-          const newMsg: AnalysisMessage = {
-            id: Date.now().toString(),
-            timestamp: data.timestamp ? new Date(data.timestamp) : new Date(),
-            content: data.content,
-            isComplete: data.isComplete ?? true,
-          };
-          setMessages((prev) => [newMsg, ...prev]);
-          setLastCapture(new Date().toISOString());
-        }
-      }
-    } catch (e) {
-      // Ignore polling errors
-    }
-  }, [isAnalyzing]);
-
   useEffect(() => {
     connectToStream();
-
-    // Poll every 2 seconds as fallback
-    const interval = setInterval(pollLatest, 2000);
 
     return () => {
       if (eventSourceRef.current) {
         eventSourceRef.current.close();
       }
-      clearInterval(interval);
     };
-  }, [connectToStream, pollLatest]);
+  }, [connectToStream]);
 
   const formatTime = (date: Date): string => {
     return date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', second: '2-digit' });
