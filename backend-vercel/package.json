@@ -12,6 +12,7 @@
   },
   "dependencies": {
     "@ai-sdk/openai": "0.0.70",
+    "@vercel/kv": "^3.0.0",
     "ai": "3.3.33",
     "next": "^15.4.10",
     "openai": "4.52.7",
