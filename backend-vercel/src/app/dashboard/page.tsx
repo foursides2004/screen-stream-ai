@@ -120,7 +120,6 @@ export default function DashboardPage() {
           case 'analysis':
             if (data.content !== undefined) {
               setIsAnalyzing(!data.isComplete);
-              latestContentRef.current = data.content;
 
               if (!currentMessageRef.current || data.isComplete) {
                 const newMsg: AnalysisMessage = {
