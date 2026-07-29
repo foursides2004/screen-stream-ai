@@ -1,0 +1,6 @@
+{
+  "buildCommand": "npm run build --workspace=backend-vercel",
+  "outputDirectory": "backend-vercel/.next",
+  "installCommand": "npm install",
+  "framework": "nextjs"
+}
