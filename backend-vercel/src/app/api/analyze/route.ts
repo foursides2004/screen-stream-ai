@@ -56,7 +56,7 @@ export async function POST(request: Request) {
       );
     }
 
-    const result = streamText({
+    const result = await streamText({
       model: openrouter(MODEL) as any,
       messages: [
         {
