@@ -3,6 +3,8 @@
 .env.local
 .env.production
 .env.*.local
+.claude/settings.local.json
+local-client/config.json
 
 # Dependencies
 node_modules
