@@ -416,8 +416,6 @@ class APIClient:
                         sys.stdout.flush()
 
                 print("\n[API] Response complete")
-                # POST complete result to dashboard storage endpoint
-                self._post_complete_result(full_response)
                 return True, full_response
 
             except requests.exceptions.Timeout:
@@ -431,27 +429,6 @@ class APIClient:
                 time.sleep(self.retry_delay)
 
         return False, "Max retries exceeded"
-
-    def _post_complete_result(self, full_response: str) -> None:
-        """Extract final content from SSE response and POST to /api/latest."""
-        try:
-            import re
-            # Extract content from SSE format: 2:[{"type":"text","content":"..."}]
-            content_parts = re.findall(r'"content":"([^"]*)"', full_response)
-            full_content = ''.join(content_parts).replace('\\n', '\n').replace('\\"', '"')
-
-            if full_content:
-                url = f"{self.base_url}/api/latest"
-                payload = {
-                    "type": "analysis",
-                    "content": full_content,
-                    "timestamp": time.strftime('%Y-%m-%dT%H:%M:%SZ', time.gmtime()),
-                    "isComplete": True,
-                }
-                self.session.post(url, json=payload, timeout=5)
-                print("[API] Posted complete result to /api/latest")
-        except Exception as e:
-            print(f"[WARN] Failed to post to /api/latest: {e}")
 
 
 class HotkeyManager:
