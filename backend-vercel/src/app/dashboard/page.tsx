@@ -2,6 +2,8 @@
 
 import React, { useEffect, useRef, useState, useCallback } from 'react';
 
+export const dynamic = 'force-dynamic';
+
 interface StreamMessage {
   type: 'analysis' | 'connected' | 'ping' | 'error';
   content?: string;

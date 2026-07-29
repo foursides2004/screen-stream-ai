@@ -1,0 +1,36 @@
+export default function CustomError({ statusCode }) {
+  return (
+    <html>
+      <head>
+        <title>{statusCode ? statusCode + ' - Error' : 'Error'}</title>
+        <meta name="viewport" content="width=device-width, initial-scale=1" />
+        <style>
+          {`
+            * { box-sizing: border-box; margin: 0; padding: 0; }
+            body { font-family: system-ui, -apple-system, sans-serif; min-height: 100vh; display: flex; align-items: center; justify-content: center; background: #f8fafc; color: #1e293b; }
+            .container { text-align: center; padding: 2rem; }
+            h1 { font-size: 6rem; font-weight: 700; color: #94a3b8; margin-bottom: 1rem; }
+            p { font-size: 1.5rem; color: #64748b; margin-bottom: 2rem; }
+            a, button { display: inline-block; margin: 0.5rem; padding: 0.75rem 1.5rem; background: #2563eb; color: white; border: none; border-radius: 0.5rem; text-decoration: none; font-weight: 500; cursor: pointer; }
+            a:hover, button:hover { background: #1d4ed8; }
+            button { background: #64748b; }
+            button:hover { background: #475569; }
+          `}
+        </style>
+      </head>
+      <body>
+        <div className="container">
+          <h1>{statusCode || 500}</h1>
+          <p>{statusCode === 404 ? 'Page not found' : 'Something went wrong'}</p>
+          <a href="/dashboard">Go to Dashboard</a>
+          <button onClick={() => window.location.reload()}>Try Again</button>
+        </div>
+      </body>
+    </html>
+  );
+}
+
+CustomError.getInitialProps = ({ res, err }) => {
+  const statusCode = res ? res.statusCode : err ? err.statusCode : 404;
+  return { statusCode };
+};

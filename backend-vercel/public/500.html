@@ -1,0 +1,38 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>500 - Server Error</title>
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body { font-family: system-ui, sans-serif; background: #f8fafc; color: #1e293b; display: flex; align-items: center; justify-content: center; min-height: 100vh; }
+    .container { text-align: center; padding: 2rem; }
+    h1 { font-size: 6rem; font-weight: 700; color: #94a3b8; margin-bottom: 1rem; }
+    p { font-size: 1.25rem; color: #64748b; margin-bottom: 2rem; }
+    .buttons { display: flex; gap: 1rem; justify-content: center; flex-wrap: wrap; }
+    button, a { display: inline-block; padding: 0.75rem 1.5rem; border-radius: 0.5rem; font-weight: 500; text-decoration: none; border: none; cursor: pointer; }
+    .primary { background: #3b82f6; color: white; }
+    .primary:hover { background: #2563eb; }
+    .secondary { background: #e2e8f0; color: #334155; }
+    .secondary:hover { background: #cbd5e1; }
+    @media (prefers-color-scheme: dark) {
+      body { background: #0f172a; color: #f1f5f9; }
+      h1 { color: #475569; }
+      p { color: #94a3b8; }
+      .secondary { background: #334155; color: #f1f5f9; }
+      .secondary:hover { background: #475569; }
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <h1>500</h1>
+    <p>Something went wrong</p>
+    <div class="buttons">
+      <button onclick="location.reload()">Try again</button>
+      <a href="/dashboard" class="secondary">Go to Dashboard</a>
+    </div>
+  </div>
+</body>
+</html>

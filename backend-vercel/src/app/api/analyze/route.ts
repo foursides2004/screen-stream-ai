@@ -1,4 +1,4 @@
-export const runtime = 'edge';
+export const runtime = 'nodejs';
 
 import { streamText } from 'ai';
 import { createOpenAI } from '@ai-sdk/openai';
