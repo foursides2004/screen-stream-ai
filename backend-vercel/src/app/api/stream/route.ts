@@ -12,6 +12,21 @@ function removeSSEClient(controller: ReadableStreamDefaultController) {
   console.log(`[SSE] Client disconnected (total: ${sseClients.size})`);
 }
 
+export function broadcastToSSE(data: string) {
+  const message = `data: ${data}\n\n`;
+  const encoder = new TextEncoder();
+  const encoded = encoder.encode(message);
+
+  for (const client of sseClients) {
+    try {
+      client.enqueue(encoded);
+    } catch (e) {
+      console.error('[SSE] Broadcast error:', e);
+      sseClients.delete(client);
+    }
+  }
+}
+
 export async function GET() {
   const encoder = new TextEncoder();
   let controllerRef: ReadableStreamDefaultController | null = null;

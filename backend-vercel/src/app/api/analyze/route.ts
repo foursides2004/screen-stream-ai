@@ -2,6 +2,7 @@ export const runtime = 'nodejs';
 
 import { streamText } from 'ai';
 import { createOpenAI } from '@ai-sdk/openai';
+import { broadcastToSSE } from '../stream/route';
 
 const openrouter = createOpenAI({
   baseURL: process.env.OPENROUTER_BASE_URL || 'https://openrouter.ai/api/v1',
@@ -73,9 +74,16 @@ export async function POST(request: Request) {
       maxTokens: 2048,
       temperature: 0.3,
       headers: OPENROUTER_HEADERS,
+      onFinish: async (result) => {
+        const content = result.text;
+        if (content) {
+          const message = JSON.stringify({ type: 'analysis', content, isComplete: true, timestamp: new Date().toISOString() });
+          broadcastToSSE(message);
+        }
+      },
     });
 
-    return (await result).toDataStreamResponse();
+    return result.toDataStreamResponse();
   } catch (error) {
     console.error('Analyze error:', error);
     return new Response(
