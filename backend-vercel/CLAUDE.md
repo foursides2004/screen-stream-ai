@@ -12,25 +12,18 @@
 ## Key Files
 - `src/app/api/analyze/route.ts` — Main analysis endpoint (sends images to Gemini via OpenRouter)
 - `src/app/api/stream/route.ts` — SSE stream endpoint for real-time dashboard updates
-- `src/app/api/chat/route.ts` — Streaming chat completion endpoint
-- `src/app/api/health/route.ts` — Health check endpoint
-- `src/app/page.tsx` — Main dashboard UI
-- `src/app/components/` — React components (ChatInterface, StreamDisplay, ConnectionStatus, SettingsPanel)
-- `src/app/lib/openrouter.ts` — OpenRouter SDK wrapper
+- `src/app/page.tsx` — Redirect to `/dashboard`
+- `src/app/dashboard/page.tsx` — Main dashboard UI (SSE client, message rendering)
+- `src/app/layout.tsx` — Root layout
+- `src/app/globals.css` — Global styles and CSS variables
 
 ## API Endpoints
 
 ### POST /api/analyze
-Sends screen capture images to Gemini for AI analysis. Requires `secretKey` in body. Streams response via SSE broadcast.
+Sends screen capture images to Gemini for AI analysis. Requires `secretKey` in body. Streams response via SSE broadcast. Optional `domain` field adds exam-specific context.
 
 ### GET /api/stream
 SSE endpoint for real-time dashboard updates. Clients connect here to receive analysis results.
-
-### POST /api/chat
-Streaming chat completion via OpenRouter. Accepts messages array with optional image_url content.
-
-### GET /api/health
-Returns `{ status: "healthy", timestamp, version, openrouter: "connected" }`
 
 ## Deployment
 - Deployed to Vercel

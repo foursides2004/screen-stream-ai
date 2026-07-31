@@ -10,7 +10,7 @@
     "dev": "npm run dev --workspace=backend-vercel",
     "build": "npm run build --workspace=backend-vercel",
     "lint": "npm run lint --workspace=backend-vercel",
-    "dev:client": "cd local-client && python main.py",
+    "dev:client": "cd local-client && python capture_agent.py",
     "dev:all": "concurrently \"npm run dev\" \"npm run dev:client\"",
     "install:all": "npm install && cd backend-vercel && npm install && cd ../local-client && pip install -r requirements.txt",
     "build:prod": "npm run build --workspace=backend-vercel",
@@ -22,6 +22,5 @@
   "engines": {
     "node": ">=20.0.0"
   },
-  "packageManager": "npm@10.8.0",
-  "private": true
+  "packageManager": "npm@10.8.0"
 }

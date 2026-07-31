@@ -1,6 +1,6 @@
 # Screen Stream AI
 
-A modular, end-to-end screen-reading AI assistant that captures a local display feed on Windows and makes the streaming AI analysis accessible in real-time via a secure web browser UI. Runs entirely on the **free tier** using OpenRouter API routing.
+A modular, end-to-end screen-reading AI assistant that captures a local display feed on Windows and makes streaming AI analysis accessible in real-time via a secure web browser UI. Runs entirely on the **free tier** using OpenRouter API routing.
 
 ## Architecture
 
@@ -12,22 +12,25 @@ A modular, end-to-end screen-reading AI assistant that captures a local display 
 │  screen-stream-ai/                                              │
 │  ├── .gitignore                                                  │
 │  ├── package.json                 # Root workspace config        │
+│  ├── main.py                      # Python entry point (root)    │
 │  ├── test-runner.js               # Local batch validation       │
 │  ├── CLAUDE.md                    # Project instructions         │
+│  ├── LICENSE                      # MIT License                  │
 │  │                                                               │
 │  ├── backend-vercel/              # Next.js 15+ Web Application  │
 │  │   ├── package.json             # Dependencies & scripts       │
 │  │   ├── tsconfig.json            # TypeScript config            │
 │  │   ├── next.config.ts           # Next.js config               │
 │  │   ├── tailwind.config.ts       # Tailwind CSS config          │
-│  │   ├── postcss.config.mjs       # PostCSS config               │
+│  │   ├── postcss.config.js        # PostCSS config               │
+│  │   ├── vercel.json              # Vercel deployment config     │
 │  │   ├── .env.example             # Env template                 │
-│  │   ├── .env.local               # Local dev (gitignored)       │
 │  │   └── src/                     │
 │  │       └── app/                 │
 │  │           ├── layout.tsx       # Root layout                  │
 │  │           ├── page.tsx         # Redirect to /dashboard       │
 │  │           ├── globals.css      # Global styles                │
+│  │           ├── not-found.tsx    # 404 page                     │
 │  │           ├── dashboard/       │
 │  │           │   └── page.tsx     # Live streaming UI            │
 │  │           └── api/             │
@@ -38,13 +41,25 @@ A modular, end-to-end screen-reading AI assistant that captures a local display 
 │  │                                                               │
 │  └── local-client/                # Python 3 Windows Client      │
 │      ├── requirements.txt         # Python deps                  │
-│      ├── config.json              # Runtime config               │
+│      ├── main.py                  # Client entry point           │
+│      ├── capture_agent.py         # Core capture logic           │
 │      ├── .env.example             # Env template                 │
-│      ├── capture_agent.py         # Main entry point             │
-│      └── .env                     # Local secrets (gitignored)   │
+│      └── .gitignore               # Gitignore for client         │
 │                                                                  │
 └─────────────────────────────────────────────────────────────────┘
 ```
+
+## Features
+
+- **Real-time screen analysis** — captures screen and streams AI responses live to the dashboard
+- **Multi-monitor support** — select which monitor to capture
+- **Window capture** — capture a specific window by title (Windows only, via `pygetwindow`)
+- **Auto-capture** — configurable interval (default: 30s) with hotkey toggle
+- **Image deduplication** — perceptual hash (pHash) to skip near-identical captures
+- **Domain context** — pass `--domain AWS` or `--domain SFCC` for exam-specific answers
+- **Multi-select awareness** — AI prompt instructs model to find ALL correct answers
+- **Streaming dashboard** — SSE-based real-time UI with markdown rendering
+- **Batch testing** — test-runner for validating against 50+ images
 
 ## Quick Start
 
@@ -59,7 +74,7 @@ A modular, end-to-end screen-reading AI assistant that captures a local display 
 git clone <your-repo>
 cd screen-stream-ai
 
-# Install root workspace deps
+# Install root workspace deps (includes concurrently, canvas)
 npm install
 
 # Install Next.js app deps
@@ -82,11 +97,11 @@ cp .env.example .env.local
 ```bash
 cd local-client
 cp .env.example .env
-cp config.json config.json  # Already exists with defaults
-# Edit config.json with your secretKey and monitor index
+# Edit .env with your OpenRouter API key
 ```
 
-**Required config.json values:**
+The Python client uses `config.json` for runtime settings (created automatically on first run with defaults). Edit it to set your `secretKey`:
+
 ```json
 {
   "secretKey": "your_32_char_secret_matching_backend",
@@ -97,38 +112,54 @@ cp config.json config.json  # Already exists with defaults
 
 ### 3. Run Locally (Development)
 
-**Terminal 1 - Start Next.js:**
+**Terminal 1 — Start Next.js:**
 ```bash
 npm run dev
 # Runs on http://localhost:3000
 ```
 
-**Terminal 2 - Start Python Client:**
+**Terminal 2 — Start Python Client:**
 ```bash
-npm run dev:client
-# Or: cd local-client && python capture_agent.py
+cd local-client && python main.py
+# Or from root: npm run dev:client
 ```
 
-**Terminal 3 - Open Dashboard:**
+**Terminal 3 — Open Dashboard:**
 Open http://localhost:3000/dashboard in your browser
 
 ### 4. Test Screen Capture
 
-Press **`Ctrl+Shift+S`** (default hotkey) on Windows to capture and analyze your screen. The AI response streams live to the dashboard.
+Press **`Ctrl+Alt+S`** (default hotkey) on Windows to capture and analyze your screen. The AI response streams live to the dashboard.
 
-Press **`Ctrl+Shift+Q`** to quit the client.
+Press **`Ctrl+Alt+Q`** to quit the client.
+
+## Hotkeys
+
+| Shortcut | Action |
+|----------|--------|
+| `Ctrl+Alt+S` | Manual screen capture |
+| `Ctrl+Alt+A` | Toggle auto-capture on/off |
+| `Ctrl+Alt+M` | Cycle capture mode (monitor ↔ window) |
+| `Ctrl+Alt+Q` | Quit the client |
+
+All hotkeys are configurable in `config.json`.
 
 ## Local Batch Testing
 
-Run the automated test suite against 50 images in `C:/done`:
+Run the automated test suite against images in `C:/done` (Windows only):
 
 ```bash
+# Install canvas dependency (Windows only, requires pkg-config + pixman)
+npm install canvas
+
 # Ensure Next.js is running on localhost:3000
 npm run dev
 
 # In another terminal:
 node test-runner.js
 ```
+
+> **Note:** `test-runner.js` requires the `canvas` npm package (native addon) which needs system-level `pkg-config` and `pixman` libraries. On macOS/Linux, install them via `brew install pkg-config pixman` or `apt install pkg-config libpixman-1-dev`.
 
 The test runner:
 - Scans `C:/done` for PNG/JPG/WEBP (max 50)
@@ -142,20 +173,22 @@ The test runner:
 ### Vercel (Next.js App)
 
 ```bash
-# Only after local testing passes
 cd backend-vercel
 vercel --prod
 ```
 
 Add environment variables in Vercel Dashboard:
-- `OPENROUTER_API_KEY`
-- `APP_SECRET_KEY`
-- `OPENROUTER_BASE_URL`
-- `OPENROUTER_MODEL`
-- `OPENROUTER_REFERER` (your Vercel URL)
-- `OPENROUTER_TITLE`
-- `NEXT_PUBLIC_APP_URL`
-- `NEXT_PUBLIC_API_URL`
+
+| Variable | Required | Description |
+|----------|----------|-------------|
+| `OPENROUTER_API_KEY` | Yes | Your OpenRouter API key |
+| `APP_SECRET_KEY` | Yes | Shared secret (32+ chars), generate with `openssl rand -hex 32` |
+| `OPENROUTER_BASE_URL` | No | Default: `https://openrouter.ai/api/v1` |
+| `OPENROUTER_MODEL` | No | Default: `google/gemini-2.0-flash-exp:free` |
+| `OPENROUTER_REFERER` | No | Your Vercel app URL |
+| `OPENROUTER_TITLE` | No | App name for OpenRouter |
+| `NEXT_PUBLIC_APP_URL` | No | Public app URL |
+| `NEXT_PUBLIC_API_URL` | No | Public API URL |
 
 ### Python Client (Production)
 
@@ -178,7 +211,8 @@ Analyzes a screen capture via OpenRouter vision model.
 ```json
 {
   "image": "data:image/webp;base64,...",
-  "secretKey": "your_app_secret"
+  "secretKey": "your_app_secret",
+  "domain": "AWS"
 }
 ```
 
@@ -189,14 +223,16 @@ data: {"type":"text","content":" a terminal"}
 data: {"type":"done","content":"Full response..."}
 ```
 
+The `domain` field is optional — when provided, it adds exam-specific context to the AI prompt (e.g., "This is an official AWS exam...").
+
 ### GET `/api/stream`
-Server-Sent Events endpoint for real-time updates.
+Server-Sent Events endpoint for real-time dashboard updates.
 
 **Events:**
-- `connected` - Initial connection
-- `text` - Streaming token
-- `done` - Complete response
-- `ping` - Keepalive (30s)
+- `connected` — Initial connection
+- `analysis` — Complete analysis result
+- `ping` — Keepalive (30s)
+- `error` — Error message
 
 ## Configuration
 
@@ -206,7 +242,7 @@ Server-Sent Events endpoint for real-time updates.
 |----------|----------|-------------|
 | `OPENROUTER_API_KEY` | Yes | Your OpenRouter API key |
 | `APP_SECRET_KEY` | Yes | Shared secret (32+ chars) |
-| `OPENROUTER_MODEL` | No | Default: `nvidia/nemotron-3-ultra-550b-a55b:free` |
+| `OPENROUTER_MODEL` | No | Default: `google/gemini-2.0-flash-exp:free` |
 | `OPENROUTER_REFERER` | No | Your app URL for OpenRouter |
 | `OPENROUTER_TITLE` | No | App name for OpenRouter |
 
@@ -217,15 +253,24 @@ Server-Sent Events endpoint for real-time updates.
 | `apiBaseUrl` | `http://localhost:3000` | Backend URL |
 | `apiEndpoint` | `/api/analyze` | Analysis endpoint |
 | `secretKey` | *(required)* | Must match backend |
+| `domain` | *(empty)* | Domain context for exam questions (e.g., `AWS`, `SFCC`) |
 | `monitorIndex` | `1` | Monitor to capture (0-based) |
-| `captureHotkey` | `ctrl+shift+s` | Capture trigger |
-| `quitHotkey` | `ctrl+shift+q` | Exit client |
+| `captureHotkey` | `ctrl+alt+s` | Capture trigger |
+| `quitHotkey` | `ctrl+alt+q` | Exit client |
+| `toggleAutoCaptureHotkey` | `ctrl+alt+a` | Toggle auto-capture |
+| `cycleModeHotkey` | `ctrl+alt+m` | Cycle monitor/window mode |
 | `maxWidth` | `1920` | Downscale limit |
 | `imageQuality` | `80` | WebP/JPEG quality |
 | `imageFormat` | `webp` | Output format |
 | `requestTimeout` | `30` | API timeout (seconds) |
 | `retryAttempts` | `3` | Retry on failure |
 | `retryDelay` | `1000` | Retry delay (ms) |
+| `captureInterval` | `30` | Auto-capture interval (seconds) |
+| `autoCapture` | `true` | Enable auto-capture on startup |
+| `captureMode` | `monitor` | `monitor` or `window` |
+| `targetWindowTitle` | *(empty)* | Window title for window capture mode |
+| `deduplicationEnabled` | `false` | Skip near-identical images |
+| `deduplicationThreshold` | `0.95` | pHash similarity threshold (0-1) |
 
 ## Project Commands
 
@@ -236,21 +281,22 @@ npm run dev:client    # Start Python client
 npm run dev:all       # Start both concurrently
 npm run build         # Build Next.js for production
 npm run lint          # Lint all workspaces
-npm run install:all   # Install all deps
+npm run install:all   # Install all deps (npm + pip)
 
 # Backend
-cd backend-vercel && npm run dev       # Dev server (Turbopack)
-cd backend-vercel && npm run build     # Production build
-cd backend-vercel && npm run type-check # TypeScript check
+cd backend-vercel && npm run dev          # Dev server
+cd backend-vercel && npm run build        # Production build
+cd backend-vercel && npm run type-check   # TypeScript check
 
 # Local Client
-cd local-client && python capture_agent.py
-cd local-client && pip install -r requirements.txt
+cd local-client && python main.py                      # Run client
+cd local-client && python main.py --domain AWS         # Run with domain context
+cd local-client && pip install -r requirements.txt     # Install Python deps
 ```
 
 ## Free Tier Limits
 
-- **OpenRouter**: Free models only (Nemotron 3 Ultra, Gemini Flash, etc.)
+- **OpenRouter**: Free models only (Gemini Flash, etc.)
 - **Rate Limits**: ~20 requests/minute on free tier
 - **Vercel Hobby**: 100GB bandwidth, 100GB-hours serverless
 - **Local Client**: No cloud costs, runs on your Windows machine
@@ -285,4 +331,4 @@ cd local-client && pip install -r requirements.txt
 
 ## License
 
-MIT License - See LICENSE file for details.
+MIT License — See [LICENSE](LICENSE) file for details.

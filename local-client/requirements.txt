@@ -4,3 +4,4 @@ requests==2.31.0
 pynput==1.7.6
 python-dotenv==1.0.1
 pygetwindow>=0.0.9
+websockets>=12.0
