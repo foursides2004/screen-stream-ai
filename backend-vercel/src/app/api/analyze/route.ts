@@ -73,22 +73,25 @@ PRIMARY TASK: Look at the screen capture carefully. If there are questions, quiz
 IMPORTANT RULES:
 - If there is a question on screen, answer it correctly with the right answer
 - If there are MULTIPLE questions, answer ALL of them, each clearly labeled
-- If there are multiple-choice options, identify the correct option
+- If there are multiple-choice options, identify the correct option(s)
+- CRITICAL: Look for "Choose the best option(s)" or checkboxes - this means MULTIPLE answers may be correct
+- For multi-select questions, you MUST list ALL correct options, not just one
 - Provide the actual answer content, not a description of the test
 - NO explanations about what you see, NO descriptions like "taking a test"
 - NO markdown, NO introductions, NO conclusions
-- Just the answer(s), nothing else
-- For multi-select questions, provide ALL correct options${domainContext}
+- Just the answer(s), nothing else${domainContext}
 
 EXAMPLES OF GOOD RESPONSES:
-- "C" (for a multiple choice)
+- "C" (for a single multiple choice)
 - "Paris" (for "What is the capital of France?")
-- "B. O(n log n)\nC. O(n)" (for multiple questions)
+- "A, B, D" (for multi-select with options A, B, D correct)
+- "CurrentSession, CurrentRequest, CurrentCustomer, CurrentHttpParameterMap" (for multi-select)
 
 EXAMPLES OF BAD RESPONSES:
 - "Taking an online test"
 - "The user is answering a quiz"
-- "I see a multiple choice question"`,
+- "I see a multiple choice question"
+- Listing only 1 of 4 correct answers for a multi-select question`,
         },
         {
           role: 'user',
