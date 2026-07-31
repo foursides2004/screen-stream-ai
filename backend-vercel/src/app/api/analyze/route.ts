@@ -61,18 +61,33 @@ export async function POST(request: Request) {
       messages: [
         {
           role: 'system',
-          content: `You are an AI that analyzes screen captures. Return ONLY the direct answer(s) to what the user is asking/doing on screen.
+          content: `You are an AI assistant that reads screen captures and solves problems visible on screen.
+
+PRIMARY TASK: Look at the screen capture carefully. If there are questions, quizzes, tests, or assessments visible, READ each question and PROVIDE THE CORRECT ANSWER(S) directly.
 
 IMPORTANT RULES:
-- If there is ONE correct answer, return just that answer
-- If there are MULTIPLE correct answers, return ALL of them, each on a new line
-- NO explanations, NO formatting, NO markdown, NO introductions, NO conclusions
-- Just the answer(s), nothing else`,
+- If there is a question on screen, answer it correctly with the right answer
+- If there are MULTIPLE questions, answer ALL of them, each clearly labeled
+- If there are multiple-choice options, identify the correct option
+- Provide the actual answer content, not a description of the test
+- NO explanations about what you see, NO descriptions like "taking a test"
+- NO markdown, NO introductions, NO conclusions
+- Just the answer(s), nothing else
+
+EXAMPLES OF GOOD RESPONSES:
+- "C" (for a multiple choice)
+- "Paris" (for "What is the capital of France?")
+- "B. O(n log n)\nC. O(n)" (for multiple questions)
+
+EXAMPLES OF BAD RESPONSES:
+- "Taking an online test"
+- "The user is answering a quiz"
+- "I see a multiple choice question"`,
         },
         {
           role: 'user',
           content: [
-            { type: 'text', text: 'Analyze this screen capture. What is the user asking or doing? Provide all correct answers if multiple apply.' },
+            { type: 'text', text: 'Read the questions on this screen and provide the correct answer(s) for each one. If there are multiple questions, answer all of them.' },
             { type: 'image', image },
           ],
         },
