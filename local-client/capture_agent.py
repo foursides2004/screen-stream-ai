@@ -25,6 +25,8 @@ from mss import mss
 from PIL import Image, ImageFilter
 from pynput import keyboard
 from pynput.keyboard import Key, Listener
+from reviewer_databank import ReviewerDatabank
+from parse_response import parse_qa_from_response
 
 try:
     import pygetwindow as gw
@@ -514,6 +516,7 @@ class CaptureAgent:
         self.config = Config()
         self.capture = ScreenCapture(self.config)
         self.api = APIClient(self.config)
+        self.databank = ReviewerDatabank()
 
         # State
         self.running = True
@@ -595,6 +598,39 @@ class CaptureAgent:
             if success:
                 print("[CAPTURE] Analysis complete")
                 self.last_response = response or ""
+
+                # Parse structured Q&A and save to databank
+                if response:
+                    parsed = parse_qa_from_response(response)
+                    if parsed:
+                        existing = self.databank.find(parsed["question"])
+                        entry = self.databank.add(
+                            parsed["question"],
+                            parsed["choices"],
+                            parsed["correctAnswer"],
+                            domain,
+                        )
+                        if existing:
+                            print(f"[REVIEWER] Known question — seen {entry.seen_count} times")
+                        else:
+                            print(f"[REVIEWER] New question saved to databank")
+
+                        # Sync to backend for reviewer dashboard
+                        try:
+                            requests.post(
+                                f"{self.api.base_url}/api/reviewer/entries",
+                                json={
+                                    "question": parsed["question"],
+                                    "choices": parsed["choices"],
+                                    "correctAnswer": parsed["correctAnswer"],
+                                    "domain": domain,
+                                },
+                                timeout=5,
+                            )
+                        except Exception:
+                            pass  # Best-effort sync
+                    else:
+                        print("[REVIEWER] No structured data in response")
             else:
                 print(f"[CAPTURE] Failed: {response}")
 

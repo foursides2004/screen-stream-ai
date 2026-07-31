@@ -1,6 +1,7 @@
 'use client';
 
 import React, { useEffect, useRef, useState, useCallback } from 'react';
+import Link from 'next/link';
 
 export const dynamic = 'force-dynamic';
 
@@ -154,6 +155,10 @@ export default function DashboardPage() {
           case 'ping':
             break;
 
+          case 'qa_entry':
+            // Q&A entry received — tracked by reviewer page
+            break;
+
           case 'error':
             console.error('Stream error:', data.content);
             setIsAnalyzing(false);
@@ -237,6 +242,12 @@ export default function DashboardPage() {
           </div>
 
           <div className="flex items-center gap-4 text-sm">
+            <Link
+              href="/reviewer"
+              className="text-xs text-muted-foreground hover:text-foreground transition-colors"
+            >
+              Reviewer
+            </Link>
             <div className={`flex items-center gap-1.5 px-3 py-1 rounded-full bg-muted ${
               isAnalyzing ? 'animate-pulse-soft' : ''
             }`}>

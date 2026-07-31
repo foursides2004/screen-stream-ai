@@ -3,6 +3,8 @@ export const runtime = 'nodejs';
 import { streamText } from 'ai';
 import { createOpenAI } from '@ai-sdk/openai';
 import { broadcastToSSE } from '../stream/route';
+import { extractStructuredQA } from '@/lib/extract-structured';
+import { reviewerStore } from '@/lib/reviewer-store';
 
 const openrouter = createOpenAI({
   baseURL: process.env.OPENROUTER_BASE_URL || 'https://openrouter.ai/api/v1',
@@ -81,6 +83,21 @@ IMPORTANT RULES:
 - NO markdown, NO introductions, NO conclusions
 - Just the answer(s), nothing else${domainContext}
 
+AFTER your answer, you MUST also output a JSON code block with this exact structure:
+\`\`\`json
+{
+  "question": "the full question text from the screen",
+  "choices": [
+    {"label": "A", "content": "choice text"},
+    {"label": "B", "content": "choice text"}
+  ],
+  "correctAnswer": ["A"]
+}
+\`\`\`
+
+For questions without choices (fill-in-the-blank), use an empty choices array and put the answer text in correctAnswer.
+For multi-select questions, list all correct labels in the correctAnswer array.
+
 EXAMPLES OF GOOD RESPONSES:
 - "C" (for a single multiple choice)
 - "Paris" (for "What is the capital of France?")
@@ -107,8 +124,23 @@ EXAMPLES OF BAD RESPONSES:
       onFinish: async (result) => {
         const content = result.text;
         if (content) {
-          const message = JSON.stringify({ type: 'analysis', content, isComplete: true, timestamp: new Date().toISOString() });
+          const timestamp = new Date().toISOString();
+          const message = JSON.stringify({ type: 'analysis', content, isComplete: true, timestamp });
           broadcastToSSE(message);
+
+          // Extract structured Q&A and broadcast for reviewer
+          const structured = extractStructuredQA(content);
+          if (structured) {
+            const entry = reviewerStore.upsert({
+              id: crypto.randomUUID(),
+              question: structured.question,
+              choices: structured.choices,
+              correctAnswer: structured.correctAnswer,
+              domain: domain || '',
+            });
+            const qaMessage = JSON.stringify({ type: 'qa_entry', entry, timestamp });
+            broadcastToSSE(qaMessage);
+          }
         }
       },
     });

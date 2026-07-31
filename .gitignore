@@ -5,6 +5,7 @@
 .env.*.local
 .claude/settings.local.json
 local-client/config.json
+local-client/reviewer_databank.json
 
 # Dependencies
 node_modules
