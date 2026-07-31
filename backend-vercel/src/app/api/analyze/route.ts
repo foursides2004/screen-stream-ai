@@ -20,6 +20,7 @@ const OPENROUTER_HEADERS: Record<string, string> = {
 interface AnalyzeRequest {
   image: string;
   secretKey: string;
+  domain?: string;
 }
 
 export async function POST(request: Request) {
@@ -40,7 +41,7 @@ export async function POST(request: Request) {
       );
     }
 
-    const { image, secretKey } = body;
+    const { image, secretKey, domain } = body;
 
     if (!secretKey || secretKey !== APP_SECRET) {
       return new Response(
@@ -55,6 +56,10 @@ export async function POST(request: Request) {
         { status: 400, headers: { 'Content-Type': 'application/json' } }
       );
     }
+
+    const domainContext = domain
+      ? `\n\nDOMAIN CONTEXT: This is an official ${domain} exam/assessment. Treat all questions as formal ${domain} exam questions and provide accurate answers based on ${domain} documentation, official guidelines, and established best practices.`
+      : '';
 
     const result = await streamText({
       model: openrouter(MODEL) as any,
@@ -73,6 +78,7 @@ IMPORTANT RULES:
 - NO explanations about what you see, NO descriptions like "taking a test"
 - NO markdown, NO introductions, NO conclusions
 - Just the answer(s), nothing else
+- For multi-select questions, provide ALL correct options${domainContext}
 
 EXAMPLES OF GOOD RESPONSES:
 - "C" (for a multiple choice)

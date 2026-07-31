@@ -13,6 +13,7 @@ import os
 import signal
 import threading
 import asyncio
+import argparse
 from io import BytesIO
 from pathlib import Path
 from typing import Optional, Dict, Any, Tuple, List
@@ -40,6 +41,7 @@ class Config:
         "apiBaseUrl": "http://localhost:3000",
         "apiEndpoint": "/api/analyze",
         "secretKey": "",
+        "domain": "",
         "monitorIndex": 1,
         "captureHotkey": "ctrl+alt+s",
         "quitHotkey": "ctrl+alt+q",
@@ -377,13 +379,15 @@ class APIClient:
             "User-Agent": "ScreenStreamAI-Client/1.0",
         })
 
-    def send_analysis(self, image_data_url: str) -> Tuple[bool, Optional[str]]:
+    def send_analysis(self, image_data_url: str, domain: str = "") -> Tuple[bool, Optional[str]]:
         """Send image to API for analysis with retries."""
         url = f"{self.base_url}{self.endpoint}"
         payload = {
             "image": image_data_url,
             "secretKey": self.secret_key,
         }
+        if domain:
+            payload["domain"] = domain
 
         for attempt in range(self.max_retries):
             try:
@@ -586,7 +590,8 @@ class CaptureAgent:
             # Update perceptual hash for next comparison
             self.capture.update_phash(img)
 
-            success, response = self.api.send_analysis(data_url)
+            domain = self.config.get("domain", "")
+            success, response = self.api.send_analysis(data_url, domain)
             if success:
                 print("[CAPTURE] Analysis complete")
                 self.last_response = response or ""
@@ -679,6 +684,9 @@ class CaptureAgent:
         print("SCREEN STREAM AI - Local Capture Agent")
         print("=" * 50)
         print(f"API: {self.config.get('apiBaseUrl')}{self.config.get('apiEndpoint')}")
+        domain = self.config.get('domain', '')
+        if domain:
+            print(f"Domain: {domain}")
         print(f"Mode: {self.config.get('captureMode', 'monitor')}")
 
         # Interactive window selection at startup
@@ -743,7 +751,14 @@ class CaptureAgent:
 
 
 def main():
+    parser = argparse.ArgumentParser(description="Screen Stream AI - Local Capture Agent")
+    parser.add_argument("--domain", type=str, default="", help="Domain context for exam questions (e.g., SFCC, AWS)")
+    args = parser.parse_args()
+
     agent = CaptureAgent()
+    if args.domain:
+        agent.config.set("domain", args.domain)
+        print(f"[CONFIG] Domain set to: {args.domain}")
     agent.run()
 
 
