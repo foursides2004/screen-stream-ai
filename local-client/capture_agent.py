@@ -51,7 +51,7 @@ class Config:
         "requestTimeout": 30,
         "retryAttempts": 3,
         "retryDelay": 1000,
-        "captureInterval": 20,
+        "captureInterval": 30,
         "autoCapture": True,
         "captureMode": "monitor",
         "targetWindowTitle": "",
