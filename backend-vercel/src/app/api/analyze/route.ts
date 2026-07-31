@@ -61,12 +61,18 @@ export async function POST(request: Request) {
       messages: [
         {
           role: 'system',
-          content: `You are an AI that analyzes screen captures. Return ONLY the direct answer to what the user is asking/doing on screen. No explanations, no formatting, no markdown, no introductions. Just the answer.`,
+          content: `You are an AI that analyzes screen captures. Return ONLY the direct answer(s) to what the user is asking/doing on screen.
+
+IMPORTANT RULES:
+- If there is ONE correct answer, return just that answer
+- If there are MULTIPLE correct answers, return ALL of them, each on a new line
+- NO explanations, NO formatting, NO markdown, NO introductions, NO conclusions
+- Just the answer(s), nothing else`,
         },
         {
           role: 'user',
           content: [
-            { type: 'text', text: 'Analyze this screen capture and provide helpful insights.' },
+            { type: 'text', text: 'Analyze this screen capture. What is the user asking or doing? Provide all correct answers if multiple apply.' },
             { type: 'image', image },
           ],
         },

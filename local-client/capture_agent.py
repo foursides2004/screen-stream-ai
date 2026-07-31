@@ -51,11 +51,11 @@ class Config:
         "requestTimeout": 30,
         "retryAttempts": 3,
         "retryDelay": 1000,
-        "captureInterval": 10,
+        "captureInterval": 20,
         "autoCapture": True,
         "captureMode": "monitor",
         "targetWindowTitle": "",
-        "deduplicationEnabled": True,
+        "deduplicationEnabled": False,
         "deduplicationThreshold": 0.95,
         "dashboardWsEndpoint": "/api/ws",
     }
@@ -549,9 +549,9 @@ class CaptureAgent:
         threshold = self.config.get("deduplicationThreshold", 0.95)
         similarity = SequenceMatcher(None, self.last_prompt, prompt).ratio()
 
-        if similarity >= threshold:
-            print(f"[DEDUP] Skipping - prompt similarity {similarity:.2%} >= {threshold:.0%}")
-            return True
+        #if similarity >= threshold:
+        #    print(f"[DEDUP] Skipping - prompt similarity {similarity:.2%} >= {threshold:.0%}")
+        #    return True
         return False
 
     def handle_capture(self) -> None:
