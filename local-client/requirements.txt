@@ -1,7 +1,13 @@
-mss==9.0.1
-pillow==10.3.0
-requests==2.31.0
-pynput==1.7.6
-python-dotenv==1.0.1
-pygetwindow>=0.0.9
+# Base (cross-platform)
+mss>=9.0.1
+pillow>=10.3.0
+requests>=2.31.0
+pynput>=1.7.6
+python-dotenv>=1.0.1
 websockets>=12.0
+
+# Windows only — window capture and selection
+pygetwindow>=0.0.9; sys_platform == "win32"
+
+# macOS only — window capture and selection
+pyobjc-framework-Quartz>=10.0; sys_platform == "darwin"

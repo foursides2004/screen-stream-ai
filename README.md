@@ -39,7 +39,7 @@ A modular, end-to-end screen-reading AI assistant that captures a local display 
 │  │               └── stream/      │
 │  │                   └── route.ts # SSE broadcast endpoint       │
 │  │                                                               │
-│  └── local-client/                # Python 3 Windows Client      │
+│  └── local-client/                # Python 3 Cross-Platform Client│
 │      ├── requirements.txt         # Python deps                  │
 │      ├── main.py                  # Client entry point           │
 │      ├── capture_agent.py         # Core capture logic           │
@@ -53,7 +53,7 @@ A modular, end-to-end screen-reading AI assistant that captures a local display 
 
 - **Real-time screen analysis** — captures screen and streams AI responses live to the dashboard
 - **Multi-monitor support** — select which monitor to capture
-- **Window capture** — capture a specific window by title (Windows only, via `pygetwindow`)
+- **Window capture** — capture a specific window by title (Windows via `pygetwindow`, macOS via `pyobjc`)
 - **Auto-capture** — configurable interval (default: 30s) with hotkey toggle
 - **Image deduplication** — perceptual hash (pHash) to skip near-identical captures
 - **Domain context** — pass `--domain AWS` or `--domain SFCC` for exam-specific answers
@@ -65,7 +65,7 @@ A modular, end-to-end screen-reading AI assistant that captures a local display 
 
 ### Prerequisites
 - **Node.js 20+** and **npm 10+**
-- **Python 3.11+** on Windows
+- **Python 3.11+** (Windows or macOS)
 - **OpenRouter API key** (free tier at https://openrouter.ai/keys)
 
 ### 1. Clone & Install
@@ -135,14 +135,25 @@ Press **`Ctrl+Alt+Q`** to quit the client.
 
 ## Hotkeys
 
-| Shortcut | Action |
-|----------|--------|
-| `Ctrl+Alt+S` | Manual screen capture |
-| `Ctrl+Alt+A` | Toggle auto-capture on/off |
-| `Ctrl+Alt+M` | Cycle capture mode (monitor ↔ window) |
-| `Ctrl+Alt+Q` | Quit the client |
+| Shortcut (Windows) | Shortcut (macOS) | Action |
+|---------------------|-------------------|--------|
+| `Ctrl+Alt+S` | `Cmd+Shift+S` | Manual screen capture |
+| `Ctrl+Alt+A` | `Cmd+Shift+A` | Toggle auto-capture on/off |
+| `Ctrl+Alt+M` | `Cmd+Shift+M` | Cycle capture mode (monitor ↔ window) |
+| `Ctrl+Alt+Q` | `Cmd+Shift+Q` | Quit the client |
 
-All hotkeys are configurable in `config.json`.
+All hotkeys are configurable in `config.json`. Defaults are set automatically based on your platform.
+
+### macOS Permissions
+
+On macOS, the following permissions are required:
+
+1. **Accessibility** — for global hotkeys (`pynput`)
+   - System Settings → Privacy & Security → Accessibility → add Terminal or your Python app
+2. **Screen Recording** — for screen capture (`mss`)
+   - System Settings → Privacy & Security → Screen Recording → add Terminal or your Python app
+3. **Xcode CLI Tools** — for window capture (`pyobjc`)
+   - Run `xcode-select --install` if not already installed
 
 ## Local Batch Testing
 
@@ -312,7 +323,8 @@ cd local-client && pip install -r requirements.txt     # Install Python deps
 ## Troubleshooting
 
 **Python client can't capture screen:**
-- Ensure `mss` has monitor access (Windows: run as admin if needed)
+- **macOS**: Grant Screen Recording permission (System Settings → Privacy & Security → Screen Recording)
+- **Windows**: Run as admin if needed
 - Check `monitorIndex` in config.json (0 = primary, 1 = second, etc.)
 
 **API returns 401 Unauthorized:**

@@ -1,8 +1,9 @@
 #!/usr/bin/env python3
 """
-Screen Stream AI - Local Capture Agent (Windows)
+Screen Stream AI - Local Capture Agent
 Captures screen via hotkey or auto-interval and sends to Next.js API for AI analysis.
 Supports full monitor capture, window capture, auto-capture intervals, and deduplication.
+Works on Windows and macOS.
 """
 
 import json
@@ -27,17 +28,32 @@ from pynput import keyboard
 from pynput.keyboard import Key, Listener
 from reviewer_databank import ReviewerDatabank
 from parse_response import parse_qa_from_response
-
-try:
-    import pygetwindow as gw
-    PYGETWINDOW_AVAILABLE = True
-except ImportError:
-    PYGETWINDOW_AVAILABLE = False
-    print("[WARN] pygetwindow not available - window capture disabled")
+from platform_utils import (
+    IS_WINDOWS,
+    IS_MACOS,
+    get_window_list,
+    find_window_by_title,
+)
 
 
 class Config:
     """Configuration manager with validation."""
+
+    # Platform-aware hotkey defaults
+    if IS_MACOS:
+        _DEFAULT_HOTKEYS = {
+            "captureHotkey": "cmd+shift+s",
+            "quitHotkey": "cmd+shift+q",
+            "toggleAutoCaptureHotkey": "cmd+shift+a",
+            "cycleModeHotkey": "cmd+shift+m",
+        }
+    else:
+        _DEFAULT_HOTKEYS = {
+            "captureHotkey": "ctrl+alt+s",
+            "quitHotkey": "ctrl+alt+q",
+            "toggleAutoCaptureHotkey": "ctrl+alt+a",
+            "cycleModeHotkey": "ctrl+alt+m",
+        }
 
     DEFAULTS = {
         "apiBaseUrl": "http://localhost:3000",
@@ -45,10 +61,6 @@ class Config:
         "secretKey": "",
         "domain": "",
         "monitorIndex": 1,
-        "captureHotkey": "ctrl+alt+s",
-        "quitHotkey": "ctrl+alt+q",
-        "toggleAutoCaptureHotkey": "ctrl+alt+a",
-        "cycleModeHotkey": "ctrl+alt+m",
         "maxWidth": 1920,
         "imageQuality": 80,
         "imageFormat": "webp",
@@ -62,6 +74,7 @@ class Config:
         "deduplicationEnabled": False,
         "deduplicationThreshold": 0.95,
         "dashboardWsEndpoint": "/api/ws",
+        **_DEFAULT_HOTKEYS,
     }
 
     def __init__(self, config_path: str = "config.json"):
@@ -116,13 +129,13 @@ class ScreenCapture:
 
     def __init__(self, config: Config):
         self.config = config
-        self._sct = mss()  # Initial instance for monitor detection
+        self._sct = mss.MSS()  # Initial instance for monitor detection
         self.monitors = self._sct.monitors
         print(f"[CAPTURE] Detected {len(self.monitors) - 1} monitor(s)")
 
     def _get_sct(self):
         """Get a new mss instance for thread-safe capture."""
-        return mss()
+        return mss.MSS()
 
     def get_monitor_info(self) -> Dict[str, Any]:
         idx = self.config.get("monitorIndex", 1)
@@ -140,24 +153,7 @@ class ScreenCapture:
 
     def get_window_list(self) -> List[Dict[str, Any]]:
         """Get list of available windows with titles and geometry."""
-        if not PYGETWINDOW_AVAILABLE:
-            return []
-
-        windows = []
-        try:
-            for win in gw.getAllWindows():
-                if win.title and win.visible and win.width > 0 and win.height > 0:
-                    windows.append({
-                        "title": win.title,
-                        "left": win.left,
-                        "top": win.top,
-                        "width": win.width,
-                        "height": win.height,
-                        "handle": win._hWnd if hasattr(win, '_hWnd') else None,
-                    })
-        except Exception as e:
-            print(f"[WARN] Failed to enumerate windows: {e}")
-        return windows
+        return get_window_list()
 
     def select_window_interactive(self) -> Optional[Dict[str, Any]]:
         """Interactive window selection at startup."""
@@ -200,14 +196,7 @@ class ScreenCapture:
 
     def find_window_by_title(self, title_substring: str) -> Optional[Dict[str, Any]]:
         """Find window by title substring (case-insensitive)."""
-        if not PYGETWINDOW_AVAILABLE:
-            return None
-
-        title_lower = title_substring.lower()
-        for win_info in self.get_window_list():
-            if title_lower in win_info["title"].lower():
-                return win_info
-        return None
+        return find_window_by_title(title_substring)
 
     def capture(self) -> Optional[Image.Image]:
         """Capture screenshot based on captureMode config."""
@@ -242,8 +231,8 @@ class ScreenCapture:
 
     def _capture_window(self) -> Optional[Image.Image]:
         """Capture specific window by title."""
-        if not PYGETWINDOW_AVAILABLE:
-            print("[ERROR] pygetwindow not available - falling back to monitor capture")
+        if not get_window_list():
+            print("[ERROR] Window capture not available on this platform - falling back to monitor capture")
             return self._capture_monitor()
 
         target_title = self.config.get("targetWindowTitle", "")
@@ -726,7 +715,7 @@ class CaptureAgent:
         print(f"Mode: {self.config.get('captureMode', 'monitor')}")
 
         # Interactive window selection at startup
-        if PYGETWINDOW_AVAILABLE:
+        if get_window_list():
             selected_window = self.capture.select_window_interactive()
             if selected_window is None:
                 # User chose monitor mode
@@ -757,7 +746,7 @@ class CaptureAgent:
         print("-" * 50)
 
         # Show available windows if in window mode (for reference)
-        if self.config.get("captureMode") == "window" and PYGETWINDOW_AVAILABLE:
+        if self.config.get("captureMode") == "window" and get_window_list():
             print("\nAvailable windows:")
             for w in self.capture.get_window_list():
                 marker = " >>>" if self.config.get("targetWindowTitle", "").lower() in w["title"].lower() else ""

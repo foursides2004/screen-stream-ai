@@ -1,39 +1,57 @@
 # Local Client — Python Screen Capture Agent
 
 ## Tech Stack
-- **Runtime**: Python 3.11+ on Windows 11
-- **Screen Capture**: `mss` (MSS-python) for high-performance screen capture
+- **Runtime**: Python 3.11+ (Windows and macOS)
+- **Screen Capture**: `mss` (cross-platform) for high-performance screen capture
 - **Image Encoding**: `Pillow` (PIL) for JPEG/WebP encoding
 - **Networking**: `requests` for HTTP
-- **Hotkeys**: `pynput` for global keyboard listener
+- **Hotkeys**: `pynput` for global keyboard listener (cross-platform)
+- **Window Capture**: `pygetwindow` (Windows) or `pyobjc-framework-Quartz` (macOS)
 - **Packaging**: `pip install -r requirements.txt`
 
 ## Key Files
 - `capture_agent.py` — Main capture agent with Config, ScreenCapture, APIClient, HotkeyManager, CaptureAgent classes
-- `requirements.txt` — Python dependencies
+- `platform_utils.py` — Cross-platform window enumeration (Windows: pygetwindow, macOS: Quartz)
+- `reviewer_databank.py` — Local JSON Q&A storage
+- `parse_response.py` — Parse structured Q&A from Gemini responses
+- `requirements.txt` — Python dependencies (platform-conditional)
 - `config.json` — Runtime configuration (gitignored, auto-created with defaults)
+
+## Platform Support
+
+| Feature | Windows | macOS |
+|---------|---------|-------|
+| Screen capture | ✅ `mss` | ✅ `mss` (needs Screen Recording permission) |
+| Hotkeys | ✅ `pynput` | ✅ `pynput` (needs Accessibility permission) |
+| Window capture | ✅ `pygetwindow` | ✅ `pyobjc-framework-Quartz` |
+| Image encoding | ✅ Pillow | ✅ Pillow |
 
 ## Configuration
 - `config.json` contains runtime settings including `secretKey`, `apiBaseUrl`, `captureMode`, etc.
-- `.env` file for local environment variables (gitignored)
+- Hotkey defaults are platform-aware (Ctrl+Alt on Windows, Cmd+Shift on macOS)
 - Default capture interval: 30 seconds
 - Default image format: WebP
-- Deduplication disabled by default (configurable)
 
 ## Hotkeys
+
+### Windows
 - `Ctrl+Alt+S` — Manual capture
 - `Ctrl+Alt+A` — Toggle auto-capture
 - `Ctrl+Alt+M` — Cycle capture mode (monitor/window)
 - `Ctrl+Alt+Q` — Quit
 
-## API Communication
-- Sends images as base64 data URLs to `/api/analyze` endpoint
-- Requires `secretKey` in request body
-- Streams response with retry logic (3 attempts)
-- Optional `domain` parameter for exam-specific context
+### macOS
+- `Cmd+Shift+S` — Manual capture
+- `Cmd+Shift+A` — Toggle auto-capture
+- `Cmd+Shift+M` — Cycle capture mode (monitor/window)
+- `Cmd+Shift+Q` — Quit
+
+## macOS Permissions
+- **Accessibility**: System Settings → Privacy & Security → Accessibility → add Terminal/Python
+- **Screen Recording**: System Settings → Privacy & Security → Screen Recording → add Terminal/Python
+- **Xcode CLI Tools**: `xcode-select --install` (for window capture)
 
 ## Development
 - Edit `config.json` to change settings (restart agent after changes)
 - Agent runs in foreground with keyboard interrupt support
-- Window capture requires `pygetwindow` package (optional)
 - Run with `python capture_agent.py` or `python capture_agent.py --domain AWS`
