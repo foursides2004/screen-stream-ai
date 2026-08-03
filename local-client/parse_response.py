@@ -26,9 +26,18 @@ def validate_qa_entry(data: dict) -> bool:
     """Validate that a dict has the required Q&A fields."""
     if not isinstance(data.get("question"), str) or not data["question"].strip():
         return False
-    if not isinstance(data.get("choices"), list) or len(data["choices"]) == 0:
+    # choices can be empty list for fill-in-the-blank
+    if not isinstance(data.get("choices"), list):
         return False
-    if not isinstance(data.get("correctAnswer"), list) or len(data["correctAnswer"]) == 0:
+    # correctAnswer can be a string (single answer) or list
+    answer = data.get("correctAnswer")
+    if isinstance(answer, str):
+        if not answer.strip():
+            return False
+    elif isinstance(answer, list):
+        if len(answer) == 0:
+            return False
+    else:
         return False
 
     # Validate choices have label and content
@@ -52,8 +61,14 @@ def parse_qa_from_response(text: str) -> Optional[dict]:
         return None
     if not validate_qa_entry(data):
         return None
+
+    # Normalize correctAnswer to always be a list
+    answer = data["correctAnswer"]
+    if isinstance(answer, str):
+        answer = [answer]
+
     return {
         "question": data["question"].strip(),
         "choices": data["choices"],
-        "correctAnswer": data["correctAnswer"],
+        "correctAnswer": answer,
     }
