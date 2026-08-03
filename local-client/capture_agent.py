@@ -170,6 +170,7 @@ class ScreenCapture:
 
     def __init__(self, config: Config):
         self.config = config
+        self.active_window_title: Optional[str] = None  # set at startup, not persisted
         self._sct = mss()  # Initial instance for monitor detection
         self.monitors = self._sct.monitors
         print(f"[CAPTURE] Detected {len(self.monitors) - 1} monitor(s)")
@@ -276,7 +277,7 @@ class ScreenCapture:
             print("[ERROR] Window capture not available on this platform - falling back to monitor capture")
             return self._capture_monitor()
 
-        target_title = self._active_window_title or ""
+        target_title = self.active_window_title or ""
         if not target_title:
             print("[ERROR] No window selected - falling back to monitor capture")
             return self._capture_monitor()
@@ -591,7 +592,6 @@ class CaptureAgent:
 
         # State
         self.running = True
-        self._active_window_title: Optional[str] = None  # set at startup, not persisted
         self.capture_in_progress = False
         self.auto_capture_running = False
         self.auto_capture_thread: Optional[threading.Thread] = None
@@ -862,7 +862,7 @@ class CaptureAgent:
             if get_window_list():
                 selected = self.capture.select_window_interactive()
                 if selected:
-                    self._active_window_title = selected["title"]
+                    self.capture.active_window_title = selected["title"]
                     print(f"[MODE] Switched to window: '{selected['title']}'")
                 else:
                     # User chose monitor fallback
@@ -872,7 +872,7 @@ class CaptureAgent:
                 print("[MODE] Window capture not available, staying on monitor")
                 self.config.set("captureMode", "monitor")
         else:
-            self._active_window_title = None
+            self.capture.active_window_title = None
             monitor_idx = self.config.get("monitorIndex", 1)
             print(f"[MODE] Switched to monitor: {monitor_idx}")
 
@@ -907,7 +907,7 @@ class CaptureAgent:
             else:
                 # User selected a window — store in memory only, not persisted
                 self.config.set("captureMode", "window")
-                self._active_window_title = selected_window["title"]
+                self.capture.active_window_title = selected_window["title"]
                 print(f"Target Window: '{selected_window['title']}'")
         else:
             print(f"Mode: {self.config.get('captureMode', 'monitor')}")
@@ -930,7 +930,7 @@ class CaptureAgent:
         if self.config.get("captureMode") == "window" and get_window_list():
             print("\nAvailable windows:")
             for w in self.capture.get_window_list():
-                marker = " >>>" if self._active_window_title and self._active_window_title.lower() in w["title"].lower() else ""
+                marker = " >>>" if self.capture.active_window_title and self.capture.active_window_title.lower() in w["title"].lower() else ""
                 print(f"  '{w['title']}' ({w['width']}x{w['height']}){marker}")
 
         print("-" * 50)
