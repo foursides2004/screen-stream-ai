@@ -716,6 +716,7 @@ class CaptureAgent:
                 # Parse structured Q&A and save to databank
                 parsed = parse_qa_from_response(response)
                 if parsed:
+                    print(f"[PARSE] Resolved answer: {parsed['correctAnswer']}")
                     existing = self.databank.find(parsed["question"])
                     entry = self.databank.add(
                         parsed["question"],
@@ -746,8 +747,16 @@ class CaptureAgent:
                 else:
                     print("[REVIEWER] No structured data in response")
 
-                # Submit to Vercel for dashboard display (strip JSON block)
-                dashboard_text = self._strip_json_block(response)
+                # Submit to Vercel for dashboard display
+                if parsed:
+                    # Build a readable summary with resolved answers
+                    answer_lines = [f"  {a}" for a in parsed["correctAnswer"]]
+                    dashboard_text = (
+                        f"Q: {parsed['question']}\n\n"
+                        f"Answer:\n" + "\n".join(answer_lines)
+                    )
+                else:
+                    dashboard_text = self._strip_json_block(response)
                 self.api.submit_result(dashboard_text)
             else:
                 print("[CAPTURE] No response")
