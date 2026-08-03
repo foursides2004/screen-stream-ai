@@ -82,6 +82,8 @@ class Config:
         "openrouterApiKey": "",
         "openrouterModel": "google/gemini-3.5-flash-lite",
         "openrouterBaseUrl": "https://openrouter.ai/api/v1",
+        "ragEnabled": True,
+        "ragTopN": 3,
         **_DEFAULT_HOTKEYS,
     }
 

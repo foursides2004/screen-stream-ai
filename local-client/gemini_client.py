@@ -9,6 +9,7 @@ import json
 from typing import Optional
 
 import requests
+from rag_search import get_knowledge_base
 
 
 # System prompt — must match backend-vercel/src/app/api/analyze/route.ts
@@ -85,6 +86,18 @@ class GeminiClient:
                 f"accurate answers based on {domain} documentation, official guidelines, "
                 f"and established best practices."
             )
+
+            # RAG: retrieve relevant knowledge base chunks
+            try:
+                kb = get_knowledge_base(domain)
+                # Use the system prompt keywords to search for relevant context
+                search_query = f"{domain} {' '.join(self.model.split('.'))} exam"
+                chunks = kb.search(search_query, top_n=3)
+                if chunks:
+                    rag_text = "\n---\n".join(chunks)
+                    domain_context += f"\n\nREFERENCE MATERIAL (use this to answer accurately):\n{rag_text}"
+            except Exception as e:
+                print(f"[RAG] Failed to retrieve context: {e}")
 
         system_content = SYSTEM_PROMPT.replace("{domain_context}", domain_context)
 
