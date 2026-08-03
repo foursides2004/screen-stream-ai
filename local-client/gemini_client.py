@@ -9,6 +9,7 @@ import json
 from typing import Optional
 
 import requests
+from domain_knowledge import get_domain_context
 
 
 # System prompt — must match backend-vercel/src/app/api/analyze/route.ts
@@ -79,12 +80,15 @@ class GeminiClient:
         """
         domain_context = ""
         if domain:
+            domain_knowledge = get_domain_context(domain)
             domain_context = (
                 f"\n\nDOMAIN CONTEXT: This is an official {domain} exam/assessment. "
                 f"Treat all questions as formal {domain} exam questions and provide "
                 f"accurate answers based on {domain} documentation, official guidelines, "
                 f"and established best practices."
             )
+            if domain_knowledge:
+                domain_context += f"\n\n{domain_knowledge}"
 
         system_content = SYSTEM_PROMPT.replace("{domain_context}", domain_context)
 
