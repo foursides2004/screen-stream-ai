@@ -11,12 +11,15 @@ Python Client                         Vercel Backend
 2. IF mock=true: use MockResponder
    ELSE IF lensEnabled=true:
      a. Lens OCR extracts text (free, no API key)
-     b. Send text to Gemini (text-only, cheap)
+     b. RAG: search knowledge base for relevant docs
+     c. Send text + RAG context to Gemini (text-only, cheap)
    ELSE:
      Encode image to base64
-     Call Gemini via OpenRouter (image, more tokens)
+     RAG: search knowledge base for relevant docs
+     Call Gemini via OpenRouter (image + context, more tokens)
 3. Get response text
 4. Parse response for Q&A (parse_qa_from_response)
+   - Resolves answer labels (A, B, C) to actual content text
 5. Save to local ReviewerDatabank
 6. POST /api/reviewer/entries ─────→  7. Store entry, broadcastToSSE (type: "qa_entry")
 8. POST /api/submit ───────────────→  9. BroadcastToSSE (type: "analysis")
@@ -27,12 +30,18 @@ Python Client                         Vercel Backend
 - **`lensEnabled: true`** — Google Lens OCR (free) → Gemini text-only (cheap). Avoids image tokens.
 - **Default** — Full image to Gemini via OpenRouter (most tokens, most accurate)
 
+**RAG (Retrieval-Augmented Generation)**: Searches local knowledge base (`knowledge/{domain}/`) for relevant documentation and injects it into the system prompt. Enabled by default (`ragEnabled: true`).
+
+**Answer format**: `correctAnswer` saves actual content text (e.g., `"OrderMgr"`) NOT labels (e.g., `"A"`). The parser resolves labels to content using the choices array.
+
+**Question databank**: 99 unique SFCC questions stored in `reviewer_databank.json`, synced to Vercel dashboard on startup.
+
 The Python client calls Gemini directly via OpenRouter (not through Vercel). Vercel serves as the dashboard and reviewer data store.
 
 ## Security & Environment
 
 - **Never commit secrets**: All `.env*` files with real keys are gitignored
-- **OpenRouter Free Tier**: Use free models (e.g., `google/gemini-3.1-flash-lite`)
+- **OpenRouter Free Tier**: Use free models (e.g., `google/gemini-3.5-flash-lite`)
 - **OpenRouter Headers**: Always send `HTTP-Referer` and `X-Title` headers
 - **Local Only**: Python client runs on localhost only, no external exposure
 

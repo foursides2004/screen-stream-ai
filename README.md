@@ -1,6 +1,6 @@
 # Screen Stream AI
 
-A modular, end-to-end screen-reading AI assistant that captures a local display feed on Windows and makes streaming AI analysis accessible in real-time via a secure web browser UI. Runs entirely on the **free tier** using OpenRouter API routing.
+A modular, end-to-end screen-reading AI assistant that captures a local display feed and makes streaming AI analysis accessible in real-time via a secure web browser UI. Runs entirely on the **free tier** using OpenRouter API routing. Monorepo: Next.js web app + lightweight Python client (Windows/macOS).
 
 ## Architecture
 
@@ -36,6 +36,11 @@ A modular, end-to-end screen-reading AI assistant that captures a local display 
 │  │           └── api/             │
 │  │               ├── analyze/     │
 │  │               │   └── route.ts # OpenRouter vision endpoint   │
+│  │               ├── submit/      │
+│  │               │   └── route.ts # Dashboard text submission    │
+│  │               ├── reviewer/    │
+│  │               │   └── entries/ │
+│  │               │       └── route.ts # Q&A databank sync       │
 │  │               └── stream/      │
 │  │                   └── route.ts # SSE broadcast endpoint       │
 │  │                                                               │
@@ -43,6 +48,15 @@ A modular, end-to-end screen-reading AI assistant that captures a local display 
 │      ├── requirements.txt         # Python deps                  │
 │      ├── main.py                  # Client entry point           │
 │      ├── capture_agent.py         # Core capture logic           │
+│      ├── gemini_client.py         # Gemini/OpenRouter API client │
+│      ├── lens_client.py           # Google Lens OCR (free)       │
+│      ├── rag_search.py            # RAG knowledge base search    │
+│      ├── mock_responder.py        # Mock responses for dev       │
+│      ├── parse_response.py        # Q&A parsing + label resolve  │
+│      ├── reviewer_databank.py     # Local Q&A JSON storage       │
+│      ├── knowledge/               # Domain knowledge base (RAG)  │
+│      │   └── sfcc/                # SFCC documentation chunks    │
+│      ├── config.json              # Runtime config (gitignored)  │
 │      ├── .env.example             # Env template                 │
 │      └── .gitignore               # Gitignore for client         │
 │                                                                  │
@@ -54,15 +68,17 @@ A modular, end-to-end screen-reading AI assistant that captures a local display 
 - **Real-time screen analysis** — captures screen and streams AI responses live to the dashboard
 - **Three analysis modes** — Mock (free), Lens OCR (cheap), Full Image (accurate)
 - **Google Lens OCR** — Free text extraction from screenshots using Google's search index
+- **RAG (Retrieval-Augmented Generation)** — searches local knowledge base for relevant documentation
 - **Multi-monitor support** — select which monitor to capture
 - **Window capture** — capture a specific window by title (Windows via `pygetwindow`, macOS via `pyobjc`)
 - **Auto-capture** — configurable interval (default: 30s) with hotkey toggle
 - **Image deduplication** — perceptual hash (pHash) to skip near-identical captures
 - **Domain context** — pass `--domain AWS` or `--domain SFCC` for exam-specific answers
-- **RAG (Retrieval-Augmented Generation)** — searches knowledge base for relevant documentation
 - **Multi-select awareness** — AI prompt instructs model to find ALL correct answers
+- **Answer content resolution** — saves actual answer text, not just labels (A, B, C)
+- **Question databank** — local JSON storage with Vercel dashboard sync
 - **Streaming dashboard** — SSE-based real-time UI with markdown rendering
-- **Batch testing** — test-runner for validating against 50+ images
+- **Batch processing** — scripts for bulk screenshot analysis and databank population
 
 ## Quick Start
 
