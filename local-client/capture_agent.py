@@ -37,6 +37,7 @@ from platform_utils import (
     IS_MACOS,
     get_window_list,
     find_window_by_title,
+    get_window_client_rect,
 )
 
 
@@ -288,17 +289,33 @@ class ScreenCapture:
             return self._capture_monitor()
 
         try:
-            # Capture specific window region
-            monitor = {
-                "left": window["left"],
-                "top": window["top"],
-                "width": window["width"],
-                "height": window["height"],
-            }
+            # Try to get client area (excludes title bar + borders)
+            client_rect = get_window_client_rect(target_title)
+
+            if client_rect:
+                cx, cy, cw, ch = client_rect
+                monitor = {"left": cx, "top": cy, "width": cw, "height": ch}
+                print(f"[CAPTURE] Using client area: {cw}x{ch} at ({cx},{cy})")
+            else:
+                # Fallback: full window rect
+                monitor = {
+                    "left": window["left"],
+                    "top": window["top"],
+                    "width": window["width"],
+                    "height": window["height"],
+                }
+                print(f"[CAPTURE] Client rect unavailable, using full window: {window['width']}x{window['height']}")
 
             sct = self._get_sct()
             screenshot = sct.grab(monitor)
             img = Image.frombytes("RGB", screenshot.size, screenshot.rgb)
+
+            # If we used full window rect, crop title bar as fallback
+            if not client_rect:
+                TITLE_BAR_HEIGHT = 35
+                if img.height > TITLE_BAR_HEIGHT * 2:
+                    img = img.crop((0, TITLE_BAR_HEIGHT, img.width, img.height))
+                    print(f"[CAPTURE] Cropped {TITLE_BAR_HEIGHT}px title bar -> {img.width}x{img.height}")
 
             print(f"[CAPTURE] Captured {img.width}x{img.height} from window: '{window['title']}'")
             return img

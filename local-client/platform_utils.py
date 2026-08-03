@@ -41,6 +41,60 @@ def find_window_by_title(title_substring: str) -> Optional[dict]:
     return None
 
 
+def get_window_client_rect(title_substring: str) -> Optional[tuple[int, int, int, int]]:
+    """Get the client area (content only, no title bar) of a window by title.
+
+    Uses Win32 API on Windows. Returns (left, top, width, height) or None.
+    """
+    if not IS_WINDOWS:
+        return None
+    try:
+        import ctypes
+        from ctypes import wintypes
+
+        user32 = ctypes.windll.user32
+
+        # EnumWindows callback to find HWND by title substring
+        found_hwnd = [None]
+        title_lower = title_substring.lower()
+
+        @ctypes.WINFUNCTYPE(ctypes.c_bool, wintypes.HWND, wintypes.LPARAM)
+        def _enum_callback(hwnd, _lparam):
+            length = user32.GetWindowTextLengthW(hwnd)
+            if length == 0:
+                return True
+            buf = ctypes.create_unicode_buffer(length + 1)
+            user32.GetWindowTextW(hwnd, buf, length + 1)
+            if title_lower in buf.value.lower():
+                found_hwnd[0] = hwnd
+                return False  # stop enumeration
+            return True
+
+        user32.EnumWindows(_enum_callback, 0)
+        hwnd = found_hwnd[0]
+        if not hwnd:
+            return None
+
+        # Get client rect (content area, excludes title bar + borders)
+        rect = wintypes.RECT()
+        if not user32.GetClientRect(hwnd, ctypes.byref(rect)):
+            return None
+
+        # Convert client origin to screen coordinates
+        point = wintypes.POINT(0, 0)
+        if not user32.ClientToScreen(hwnd, ctypes.byref(point)):
+            return None
+
+        width = rect.right - rect.left
+        height = rect.bottom - rect.top
+        if width <= 0 or height <= 0:
+            return None
+
+        return (point.x, point.y, width, height)
+    except Exception:
+        return None
+
+
 def _get_windows_list() -> list[dict]:
     """Windows: use pygetwindow."""
     try:
