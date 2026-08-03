@@ -135,7 +135,10 @@ def main():
     print(f"Databank total: {databank.count()}")
 
     # Step 5: Sync to Vercel
-    sync_to_vercel(databank)
+    if config.get("syncToVercel", False):
+        sync_to_vercel(databank)
+    else:
+        print("\n[SYNC] syncToVercel=false, skipping Vercel sync")
 
     print(f"\nLocal databank: reviewer_databank.json")
 

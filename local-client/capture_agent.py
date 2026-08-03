@@ -86,6 +86,7 @@ class Config:
         "ragEnabled": True,
         "ragTopN": 3,
         "lensEnabled": False,
+        "syncToVercel": False,
         **_DEFAULT_HOTKEYS,
     }
 
@@ -712,19 +713,20 @@ class CaptureAgent:
                         print(f"[REVIEWER] New question saved to databank")
 
                     # Sync to backend for reviewer dashboard
-                    try:
-                        requests.post(
-                            f"{self.api.base_url}/api/reviewer/entries",
-                            json={
-                                "question": parsed["question"],
-                                "choices": parsed["choices"],
-                                "correctAnswer": parsed["correctAnswer"],
-                                "domain": domain,
-                            },
-                            timeout=5,
-                        )
-                    except Exception as sync_err:
-                        print(f"[WARN] Failed to sync to reviewer backend: {sync_err}")
+                    if self.config.get("syncToVercel", False):
+                        try:
+                            requests.post(
+                                f"{self.api.base_url}/api/reviewer/entries",
+                                json={
+                                    "question": parsed["question"],
+                                    "choices": parsed["choices"],
+                                    "correctAnswer": parsed["correctAnswer"],
+                                    "domain": domain,
+                                },
+                                timeout=5,
+                            )
+                        except Exception as sync_err:
+                            print(f"[WARN] Failed to sync to reviewer backend: {sync_err}")
                 else:
                     print("[REVIEWER] No structured data in response")
 
@@ -922,7 +924,10 @@ class CaptureAgent:
         print("=" * 50 + "\n")
 
         # Sync local databank to Vercel on startup
-        self.sync_databank_to_vercel()
+        if self.config.get("syncToVercel", False):
+            self.sync_databank_to_vercel()
+        else:
+            print("[SYNC] syncToVercel=false, skipping Vercel sync")
 
         # Start auto-capture if enabled
         if self.config.get("autoCapture", True):
