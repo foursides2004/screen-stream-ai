@@ -291,6 +291,8 @@ class ScreenCapture:
             # Try to get client area (excludes title bar + borders)
             client_rect = get_window_client_rect(target_title)
 
+            print(f"[CAPTURE] Window bounds: left={window['left']}, top={window['top']}, {window['width']}x{window['height']}")
+
             if client_rect:
                 cx, cy, cw, ch = client_rect
                 monitor = {"left": cx, "top": cy, "width": cw, "height": ch}

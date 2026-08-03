@@ -90,6 +90,20 @@ NOISE_PATTERNS = [
     r"^>\s*\d+",
     r"^\d+\s+\d+\s+\d+",
     r"^\d+\s+Section\s+\d+",
+    # Browser UI
+    r"^https?://\S+$",
+    r"^backend-vercel.*",
+    r"^Deployment.*",
+    r"^Screen Stream.*",
+    r"^iCloud.*",
+    r"^Manga:.*",
+    r"^Free\s+On.*",
+    r"^Chat$",
+    r"^Edit$",
+    r"^Π$",
+    r"^\+$",
+    r"^backend.*",
+    r"^vercel.*",
 ]
 
 
