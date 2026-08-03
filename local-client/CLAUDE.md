@@ -4,13 +4,15 @@
 - **Runtime**: Python 3.11+ (Windows and macOS)
 - **Screen Capture**: `mss` (cross-platform) for high-performance screen capture
 - **Image Encoding**: `Pillow` (PIL) for JPEG/WebP encoding
-- **Networking**: `requests` for HTTP
+- **Networking**: `requests` for HTTP (Gemini API + Vercel API)
 - **Hotkeys**: `pynput` for global keyboard listener (cross-platform)
 - **Window Capture**: `pygetwindow` (Windows) or `pyobjc-framework-Quartz` (macOS)
 - **Packaging**: `pip install -r requirements.txt`
 
 ## Key Files
 - `capture_agent.py` — Main capture agent with Config, ScreenCapture, APIClient, HotkeyManager, CaptureAgent classes
+- `gemini_client.py` — Gemini API client (calls OpenRouter directly, same prompt as Vercel backend)
+- `mock_responder.py` — Mock response generator for development (returns valid Q&A format)
 - `platform_utils.py` — Cross-platform window enumeration (Windows: pygetwindow, macOS: Quartz)
 - `reviewer_databank.py` — Local JSON Q&A storage
 - `parse_response.py` — Parse structured Q&A from Gemini responses
@@ -31,6 +33,25 @@
 - Hotkey defaults are platform-aware (Ctrl+Alt on Windows, Cmd+Shift on macOS)
 - Default capture interval: 30 seconds
 - Default image format: WebP
+
+## Mock Mode
+Set `"mock": true` in `config.json` to skip Gemini API calls and use canned responses. This:
+- Returns realistic Q&A responses (parseable by `parse_qa_from_response`)
+- Saves to local `ReviewerDatabank` and syncs to Vercel backend
+- Submits to Vercel for dashboard display (via `/api/submit`)
+- Consumes zero Gemini tokens
+
+When `mock: false`, the Python client calls Gemini directly via OpenRouter. Requires `openrouterApiKey` in `config.json`.
+
+## Gemini / OpenRouter Config
+```json
+{
+  "mock": false,
+  "openrouterApiKey": "sk-or-v1-...",
+  "openrouterModel": "google/gemini-3.1-flash-lite",
+  "openrouterBaseUrl": "https://openrouter.ai/api/v1"
+}
+```
 
 ## Hotkeys
 

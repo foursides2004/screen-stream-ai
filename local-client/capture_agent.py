@@ -22,12 +22,15 @@ from difflib import SequenceMatcher
 
 import requests
 import websockets
+from dotenv import load_dotenv
 from mss import mss
 from PIL import Image, ImageFilter
 from pynput import keyboard
 from pynput.keyboard import Key, Listener
 from reviewer_databank import ReviewerDatabank
 from parse_response import parse_qa_from_response
+from gemini_client import GeminiClient
+from mock_responder import MockResponder
 from platform_utils import (
     IS_WINDOWS,
     IS_MACOS,
@@ -74,7 +77,22 @@ class Config:
         "deduplicationEnabled": False,
         "deduplicationThreshold": 0.95,
         "dashboardWsEndpoint": "/api/ws",
+        # Gemini / mock settings
+        "mock": False,
+        "openrouterApiKey": "",
+        "openrouterModel": "google/gemini-3.1-flash-lite",
+        "openrouterBaseUrl": "https://openrouter.ai/api/v1",
         **_DEFAULT_HOTKEYS,
+    }
+
+    # Map env var names to config.json keys
+    _ENV_MAP = {
+        "OPENROUTER_API_KEY": "openrouterApiKey",
+        "OPENROUTER_MODEL": "openrouterModel",
+        "OPENROUTER_BASE_URL": "openrouterBaseUrl",
+        "APP_SECRET_KEY": "secretKey",
+        "API_BASE_URL": "apiBaseUrl",
+        "MOCK": "mock",
     }
 
     def __init__(self, config_path: str = "config.json"):
@@ -83,6 +101,10 @@ class Config:
         self.load()
 
     def load(self) -> None:
+        # Load .env first (so env vars are available as fallback)
+        load_dotenv()
+
+        # Load config.json (takes priority over .env)
         if self.config_path.exists():
             try:
                 with open(self.config_path, 'r', encoding='utf-8') as f:
@@ -103,24 +125,39 @@ class Config:
             print(f"[ERROR] Failed to save config: {e}")
 
     def get(self, key: str, default: Any = None) -> Any:
-        return self.config.get(key, default)
+        # Check config.json first, then fall back to env vars
+        value = self.config.get(key)
+        if value is not None:
+            return value
+
+        # Check mapped env vars
+        for env_var, config_key in self._ENV_MAP.items():
+            if config_key == key:
+                env_val = os.environ.get(env_var)
+                if env_val is not None:
+                    return env_val
+
+        return default
 
     def set(self, key: str, value: Any) -> None:
         self.config[key] = value
         self.save()
 
     def validate(self) -> bool:
-        if not self.config.get("secretKey"):
-            print("[ERROR] secretKey not configured in config.json")
+        if not self.get("secretKey"):
+            print("[ERROR] secretKey not configured (set in config.json or APP_SECRET_KEY env var)")
             return False
-        if self.config["secretKey"] == "your_super_secret_key_here_min_32_chars":
+        if self.get("secretKey") == "your_super_secret_key_here_min_32_chars":
             print("[ERROR] Please change the default secretKey in config.json")
             return False
-        if self.config.get("captureMode") not in ("monitor", "window"):
+        if self.get("captureMode") not in ("monitor", "window"):
             print("[ERROR] captureMode must be 'monitor' or 'window'")
             return False
-        if self.config.get("captureMode") == "window" and not self.config.get("targetWindowTitle"):
+        if self.get("captureMode") == "window" and not self.get("targetWindowTitle"):
             print("[WARN] captureMode is 'window' but targetWindowTitle is empty - will fallback to monitor")
+        if not self.get("mock", False) and not self.get("openrouterApiKey"):
+            print("[ERROR] openrouterApiKey not configured — required when mock=false (set in config.json or OPENROUTER_API_KEY env var)")
+            return False
         return True
 
 
@@ -129,13 +166,13 @@ class ScreenCapture:
 
     def __init__(self, config: Config):
         self.config = config
-        self._sct = mss.MSS()  # Initial instance for monitor detection
+        self._sct = mss()  # Initial instance for monitor detection
         self.monitors = self._sct.monitors
         print(f"[CAPTURE] Detected {len(self.monitors) - 1} monitor(s)")
 
     def _get_sct(self):
         """Get a new mss instance for thread-safe capture."""
-        return mss.MSS()
+        return mss()
 
     def get_monitor_info(self) -> Dict[str, Any]:
         idx = self.config.get("monitorIndex", 1)
@@ -425,6 +462,21 @@ class APIClient:
 
         return False, "Max retries exceeded"
 
+    def submit_result(self, text: str) -> bool:
+        """Send pre-computed analysis to Vercel for dashboard display."""
+        url = f"{self.base_url}/api/submit"
+        payload = {"text": text, "secretKey": self.secret_key}
+        try:
+            response = self.session.post(url, json=payload, timeout=self.timeout)
+            if response.status_code == 200:
+                print("[API] Result submitted to dashboard")
+                return True
+            print(f"[WARN] Submit failed: {response.status_code}")
+            return False
+        except Exception as e:
+            print(f"[WARN] Submit error: {e}")
+            return False
+
 
 class HotkeyManager:
     """Manages global hotkey listeners."""
@@ -507,6 +559,16 @@ class CaptureAgent:
         self.api = APIClient(self.config)
         self.databank = ReviewerDatabank()
 
+        # Gemini client (used when mock=false)
+        self.gemini_client = GeminiClient(
+            api_key=self.config.get("openrouterApiKey", ""),
+            model=self.config.get("openrouterModel", "google/gemini-3.1-flash-lite"),
+            base_url=self.config.get("openrouterBaseUrl", "https://openrouter.ai/api/v1"),
+        )
+
+        # Mock responder (used when mock=true)
+        self.mock_responder = MockResponder()
+
         # State
         self.running = True
         self.capture_in_progress = False
@@ -583,45 +645,54 @@ class CaptureAgent:
             self.capture.update_phash(img)
 
             domain = self.config.get("domain", "")
-            success, response = self.api.send_analysis(data_url, domain)
-            if success:
-                print("[CAPTURE] Analysis complete")
-                self.last_response = response or ""
+
+            # Branch based on mock flag
+            if self.config.get("mock", False):
+                response = self.mock_responder.generate()
+            else:
+                timeout = self.config.get("requestTimeout", 30)
+                response = self.gemini_client.analyze(data_url, domain, timeout=timeout)
+
+            if response:
+                print(f"[CAPTURE] Response: {response[:200]}...")
+                self.last_response = response
 
                 # Parse structured Q&A and save to databank
-                if response:
-                    parsed = parse_qa_from_response(response)
-                    if parsed:
-                        existing = self.databank.find(parsed["question"])
-                        entry = self.databank.add(
-                            parsed["question"],
-                            parsed["choices"],
-                            parsed["correctAnswer"],
-                            domain,
-                        )
-                        if existing:
-                            print(f"[REVIEWER] Known question — seen {entry.seen_count} times")
-                        else:
-                            print(f"[REVIEWER] New question saved to databank")
-
-                        # Sync to backend for reviewer dashboard
-                        try:
-                            requests.post(
-                                f"{self.api.base_url}/api/reviewer/entries",
-                                json={
-                                    "question": parsed["question"],
-                                    "choices": parsed["choices"],
-                                    "correctAnswer": parsed["correctAnswer"],
-                                    "domain": domain,
-                                },
-                                timeout=5,
-                            )
-                        except Exception as sync_err:
-                            print(f"[WARN] Failed to sync to reviewer backend: {sync_err}")
+                parsed = parse_qa_from_response(response)
+                if parsed:
+                    existing = self.databank.find(parsed["question"])
+                    entry = self.databank.add(
+                        parsed["question"],
+                        parsed["choices"],
+                        parsed["correctAnswer"],
+                        domain,
+                    )
+                    if existing:
+                        print(f"[REVIEWER] Known question — seen {entry.seen_count} times")
                     else:
-                        print("[REVIEWER] No structured data in response")
+                        print(f"[REVIEWER] New question saved to databank")
+
+                    # Sync to backend for reviewer dashboard
+                    try:
+                        requests.post(
+                            f"{self.api.base_url}/api/reviewer/entries",
+                            json={
+                                "question": parsed["question"],
+                                "choices": parsed["choices"],
+                                "correctAnswer": parsed["correctAnswer"],
+                                "domain": domain,
+                            },
+                            timeout=5,
+                        )
+                    except Exception as sync_err:
+                        print(f"[WARN] Failed to sync to reviewer backend: {sync_err}")
+                else:
+                    print("[REVIEWER] No structured data in response")
+
+                # Submit to Vercel for dashboard display
+                self.api.submit_result(response)
             else:
-                print(f"[CAPTURE] Failed: {response}")
+                print("[CAPTURE] No response")
 
         except Exception as e:
             print(f"[ERROR] Capture worker failed: {e}")
@@ -739,6 +810,10 @@ class CaptureAgent:
 
         print(f"Max Width: {self.config.get('maxWidth', 1920)}")
         print(f"Format: {self.config.get('imageFormat', 'webp')}")
+        mock_enabled = self.config.get("mock", False)
+        print(f"Mock Mode: {'ON (no Gemini tokens consumed)' if mock_enabled else 'OFF'}")
+        if not mock_enabled:
+            print(f"Model: {self.config.get('openrouterModel', 'google/gemini-3.1-flash-lite')}")
         print(f"Auto-Capture: {'ON' if self.config.get('autoCapture') else 'OFF'} "
               f"({self.config.get('captureInterval', 10)}s interval)")
         print(f"Deduplication: {'ON' if self.config.get('deduplicationEnabled') else 'OFF'} "

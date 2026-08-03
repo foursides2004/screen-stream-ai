@@ -20,10 +20,16 @@
 ## API Endpoints
 
 ### POST /api/analyze
-Sends screen capture images to Gemini for AI analysis. Requires `secretKey` in body. Streams response via SSE broadcast. Optional `domain` field adds exam-specific context.
+Sends screen capture images to Gemini for AI analysis. Requires `secretKey` in body. Streams response via SSE broadcast. Optional `domain` field adds exam-specific context. **Note:** The Python client now calls Gemini directly; this endpoint is kept for backward compatibility.
+
+### POST /api/submit
+Accepts pre-computed analysis text from the Python client. Requires `text` and `secretKey` in body. Broadcasts to SSE as `type: "analysis"` for dashboard display. Used when the Python client handles Gemini calls directly (or mock mode).
 
 ### GET /api/stream
 SSE endpoint for real-time dashboard updates. Clients connect here to receive analysis results.
+
+### POST /api/reviewer/entries
+Stores Q&A entries from the reviewer databank. Accepts `question`, `choices`, `correctAnswer`, `domain`. Broadcasts `type: "qa_entry"` to SSE.
 
 ## Deployment
 - Deployed to Vercel
