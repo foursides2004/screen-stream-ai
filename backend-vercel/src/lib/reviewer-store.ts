@@ -50,7 +50,10 @@ class ReviewerStore {
     if (existing) {
       existing.seenCount += 1;
       existing.lastSeenAt = now;
-      if (entry.domain && !existing.domain) {
+      // Update all fields from latest submission
+      existing.choices = entry.choices;
+      existing.correctAnswer = entry.correctAnswer;
+      if (entry.domain) {
         existing.domain = entry.domain;
       }
       return existing;
