@@ -60,13 +60,15 @@ USER_PROMPT = "Read the questions on this screen and provide the correct answer(
 
 
 class OpenRouterClient:
-    """Calls LLM models via OpenRouter API directly from the Python client."""
+    """Calls LLM models via OpenAI-compatible API (OpenRouter or Gemini direct)."""
 
     def __init__(self, api_key: str, model: str, base_url: str):
         self.api_key = api_key
         self.model = model
         self.base_url = base_url.rstrip("/")
         self.session = requests.Session()
+        self._is_openrouter = "openrouter.ai" in self.base_url
+        self._provider = "OpenRouter" if self._is_openrouter else "Gemini"
 
     def analyze_text(self, text: str, domain: str = "", timeout: int = 30) -> Optional[str]:
         """Call LLM with extracted text (no image). Much cheaper than image analysis.
@@ -120,35 +122,36 @@ class OpenRouterClient:
         headers = {
             "Authorization": f"Bearer {self.api_key}",
             "Content-Type": "application/json",
-            "HTTP-Referer": "http://localhost:3000",
-            "X-Title": "Screen Stream AI Assistant",
         }
+        if self._is_openrouter:
+            headers["HTTP-Referer"] = "http://localhost:3000"
+            headers["X-Title"] = "Screen Stream AI Assistant"
 
         try:
             url = f"{self.base_url}/chat/completions"
-            print(f"[OPENROUTER-TEXT] Calling {self.model} (text-only, no image)")
+            print(f"[{self._provider.upper()}-TEXT] Calling {self.model} (text-only, no image)")
             response = self.session.post(url, json=payload, headers=headers, timeout=timeout)
 
             if response.status_code != 200:
-                print(f"[OPENROUTER-TEXT] API error {response.status_code}: {response.text[:500]}")
+                print(f"[{self._provider.upper()}-TEXT] API error {response.status_code}: {response.text[:500]}")
                 return None
 
             data = response.json()
             content = data["choices"][0]["message"]["content"]
-            print(f"[OPENROUTER-TEXT] Got response ({len(content)} chars)")
+            print(f"[{self._provider.upper()}-TEXT] Got response ({len(content)} chars)")
             return content
 
         except requests.exceptions.Timeout:
-            print("[OPENROUTER-TEXT] Request timeout")
+            print(f"[{self._provider.upper()}-TEXT] Request timeout")
             return None
         except requests.exceptions.ConnectionError:
-            print("[OPENROUTER-TEXT] Connection error")
+            print(f"[{self._provider.upper()}-TEXT] Connection error")
             return None
         except (KeyError, IndexError, json.JSONDecodeError) as e:
-            print(f"[OPENROUTER-TEXT] Failed to parse response: {e}")
+            print(f"[{self._provider.upper()}-TEXT] Failed to parse response: {e}")
             return None
         except Exception as e:
-            print(f"[OPENROUTER-TEXT] Unexpected error: {e}")
+            print(f"[{self._provider.upper()}-TEXT] Unexpected error: {e}")
             return None
 
     def analyze(self, image_data_url: str, domain: str = "", timeout: int = 30) -> Optional[str]:
@@ -204,33 +207,34 @@ class OpenRouterClient:
         headers = {
             "Authorization": f"Bearer {self.api_key}",
             "Content-Type": "application/json",
-            "HTTP-Referer": "http://localhost:3000",
-            "X-Title": "Screen Stream AI Assistant",
         }
+        if self._is_openrouter:
+            headers["HTTP-Referer"] = "http://localhost:3000"
+            headers["X-Title"] = "Screen Stream AI Assistant"
 
         try:
             url = f"{self.base_url}/chat/completions"
-            print(f"[OPENROUTER] Calling {self.model} via {url}")
+            print(f"[{self._provider.upper()}] Calling {self.model} via {self._provider}")
             response = self.session.post(url, json=payload, headers=headers, timeout=timeout)
 
             if response.status_code != 200:
-                print(f"[OPENROUTER] API error {response.status_code}: {response.text[:500]}")
+                print(f"[{self._provider.upper()}] API error {response.status_code}: {response.text[:500]}")
                 return None
 
             data = response.json()
             content = data["choices"][0]["message"]["content"]
-            print(f"[OPENROUTER] Got response ({len(content)} chars)")
+            print(f"[{self._provider.upper()}] Got response ({len(content)} chars)")
             return content
 
         except requests.exceptions.Timeout:
-            print("[OPENROUTER] Request timeout")
+            print(f"[{self._provider.upper()}] Request timeout")
             return None
         except requests.exceptions.ConnectionError:
-            print("[OPENROUTER] Connection error")
+            print(f"[{self._provider.upper()}] Connection error")
             return None
         except (KeyError, IndexError, json.JSONDecodeError) as e:
-            print(f"[OPENROUTER] Failed to parse response: {e}")
+            print(f"[{self._provider.upper()}] Failed to parse response: {e}")
             return None
         except Exception as e:
-            print(f"[OPENROUTER] Unexpected error: {e}")
+            print(f"[{self._provider.upper()}] Unexpected error: {e}")
             return None

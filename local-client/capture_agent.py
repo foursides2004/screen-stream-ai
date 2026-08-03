@@ -89,6 +89,8 @@ class Config:
         "lensEnabled": False,
         "syncToVercel": False,
         **_DEFAULT_HOTKEYS,
+        "geminiApiKey": "",
+        "geminiModel": "gemini-2.5-flash",
     }
 
     # Map env var names to config.json keys
@@ -96,6 +98,7 @@ class Config:
         "OPENROUTER_API_KEY": "openrouterApiKey",
         "OPENROUTER_MODEL": "openrouterModel",
         "OPENROUTER_BASE_URL": "openrouterBaseUrl",
+        "GEMINI_API_KEY": "geminiApiKey",
         "APP_SECRET_KEY": "secretKey",
         "API_BASE_URL": "apiBaseUrl",
         "MOCK": "mock",
@@ -159,8 +162,8 @@ class Config:
         if self.get("captureMode") not in ("monitor", "window"):
             print("[ERROR] captureMode must be 'monitor' or 'window'")
             return False
-        if not self.get("mock", False) and not self.get("openrouterApiKey"):
-            print("[ERROR] openrouterApiKey not configured — required when mock=false (set in config.json or OPENROUTER_API_KEY env var)")
+        if not self.get("mock", False) and not self.get("openrouterApiKey") and not self.get("geminiApiKey"):
+            print("[ERROR] No API key configured — set geminiApiKey or openrouterApiKey in config.json")
             return False
         return True
 
@@ -582,12 +585,22 @@ class CaptureAgent:
         self.api = APIClient(self.config)
         self.databank = ReviewerDatabank()
 
-        # Gemini client (used when mock=false)
-        self.openrouter_client = OpenRouterClient(
-            api_key=self.config.get("openrouterApiKey", ""),
-            model=self.config.get("openrouterModel", "google/gemini-3.5-flash-lite"),
-            base_url=self.config.get("openrouterBaseUrl", "https://openrouter.ai/api/v1"),
-        )
+        # LLM client — Gemini API takes priority over OpenRouter
+        gemini_key = self.config.get("geminiApiKey", "")
+        if gemini_key:
+            self.llm_client = OpenRouterClient(
+                api_key=gemini_key,
+                model=self.config.get("geminiModel", "gemini-2.5-flash"),
+                base_url="https://generativelanguage.googleapis.com/v1beta/openai",
+            )
+            self._llm_provider = "gemini"
+        else:
+            self.llm_client = OpenRouterClient(
+                api_key=self.config.get("openrouterApiKey", ""),
+                model=self.config.get("openrouterModel", "google/gemini-3.5-flash-lite"),
+                base_url=self.config.get("openrouterBaseUrl", "https://openrouter.ai/api/v1"),
+            )
+            self._llm_provider = "openrouter"
 
         # Mock responder (used when mock=true)
         self.mock_responder = MockResponder()
@@ -709,7 +722,7 @@ class CaptureAgent:
                 # Lens pipeline: OCR → text-only Gemini (no image tokens)
                 response = self._analyze_with_lens(img, domain, timeout)
             else:
-                response = self.openrouter_client.analyze(data_url, domain, timeout=timeout)
+                response = self.llm_client.analyze(data_url, domain, timeout=timeout)
 
             if response:
                 print(f"[CAPTURE] Response: {response[:200]}...")
@@ -793,7 +806,7 @@ class CaptureAgent:
             if not ocr_text or len(ocr_text) < 100:
                 print(f"[LENS] OCR text too short ({len(ocr_text or '')} chars), falling back to image analysis")
                 data_url = self.capture.encode_image(img)
-                return self.openrouter_client.analyze(data_url, domain, timeout=timeout)
+                return self.llm_client.analyze(data_url, domain, timeout=timeout)
 
             # Check if OCR text looks like real content (not just UI chrome)
             # Require: question mark AND substantial letter content (not just symbols/numbers)
@@ -806,19 +819,19 @@ class CaptureAgent:
                 print(f"[LENS] OCR text doesn't look like question content (letters: {letter_ratio:.0%}), falling back to image analysis")
                 print(f"[LENS] Text preview: {ocr_text[:200]}...")
                 data_url = self.capture.encode_image(img)
-                return self.openrouter_client.analyze(data_url, domain, timeout=timeout)
+                return self.llm_client.analyze(data_url, domain, timeout=timeout)
 
             print(f"[LENS] OCR extracted {len(ocr_text)} chars")
             print(f"[LENS] Text preview: {ocr_text[:200]}...")
 
             # Step 2: Send text to Gemini (text-only, no image)
-            response = self.openrouter_client.analyze_text(ocr_text, domain, timeout=timeout)
+            response = self.llm_client.analyze_text(ocr_text, domain, timeout=timeout)
             return response
 
         except Exception as e:
             print(f"[LENS] Pipeline error: {e}, falling back to image analysis")
             data_url = self.capture.encode_image(img)
-            return self.openrouter_client.analyze(data_url, domain, timeout=timeout)
+            return self.llm_client.analyze(data_url, domain, timeout=timeout)
 
         finally:
             if tmp_path and os.path.exists(tmp_path):
@@ -939,7 +952,9 @@ class CaptureAgent:
         mock_enabled = self.config.get("mock", False)
         print(f"Mock Mode: {'ON (no Gemini tokens consumed)' if mock_enabled else 'OFF'}")
         if not mock_enabled:
-            print(f"Model: {self.config.get('openrouterModel', 'google/gemini-3.1-flash-lite')}")
+            provider = self._llm_provider
+            model = self.llm_client.model
+            print(f"LLM: {provider} / {model}")
         print(f"Auto-Capture: {'ON' if self.config.get('autoCapture') else 'OFF'} "
               f"({self.config.get('captureInterval', 10)}s interval)")
         print(f"Deduplication: {'ON' if self.config.get('deduplicationEnabled') else 'OFF'} "
