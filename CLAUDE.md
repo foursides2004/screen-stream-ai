@@ -1,6 +1,6 @@
 # Screen Stream AI
 
-A modular, end-to-end screen-reading AI assistant that captures a local display feed and makes streaming AI analysis accessible in real-time via a secure web browser UI. Runs entirely on a FREE tier using OpenRouter API routing. Monorepo: Next.js web app + lightweight Python client (Windows/macOS).
+A modular, end-to-end screen-reading AI assistant that captures a local display feed and makes streaming AI analysis accessible in real-time via a secure web browser UI. Runs on Gemini API (free tier) or OpenRouter. Monorepo: Next.js web app + lightweight Python client (Windows/macOS).
 
 ## Architecture
 
@@ -8,41 +8,51 @@ A modular, end-to-end screen-reading AI assistant that captures a local display 
 Python Client                         Vercel Backend
 ─────────────                         ──────────────
 1. Capture screen (mss)
+   - Window mode: captures client area only (Win32 API, no title bar)
+   - Supports wildcard title matching (e.g., "Screenshot" matches all)
 2. IF mock=true: use MockResponder
    ELSE IF lensEnabled=true:
      a. Lens OCR extracts text (free, no API key)
-     b. RAG: search knowledge base for relevant docs
-     c. Send text + RAG context to LLM via OpenRouter (text-only, cheap)
+     b. OCR quality check: min 100 chars, >40% letters, must have "?" or choice labels
+     c. If OCR is garbage → fall back to image mode
+     d. RAG: search knowledge base for relevant docs
+     e. Send text + RAG context to LLM (text-only, cheap)
    ELSE:
      Encode image to base64
      RAG: search knowledge base for relevant docs
-     Call LLM via OpenRouter (image + context, more tokens)
+     Call LLM (image + context, most tokens, most accurate)
 3. Get response text
 4. Parse response for Q&A (parse_qa_from_response)
    - Resolves answer labels (A, B, C) to actual content text
+   - Drops unresolved single-letter labels
 5. Save to local ReviewerDatabank
 6. POST /api/reviewer/entries ─────→  7. Store entry, broadcastToSSE (type: "qa_entry")
-8. POST /api/submit ───────────────→  9. BroadcastToSSE (type: "analysis")
+8. POST /api/submit ───────────────→  9. BroadcastToSSE (type: "analysis", answers only)
 ```
+
+**LLM Provider** (configured via `config.json`):
+- **`geminiApiKey` set** → Direct Gemini API (free tier, `gemini-3.6-flash` default, 1M context)
+- **`geminiApiKey` empty** → OpenRouter (free tier models)
+- Gemini uses OpenAI-compatible endpoint at `generativelanguage.googleapis.com/v1beta/openai`
 
 **Three analysis modes** (configured via `config.json`):
 - **`mock: true`** — Canned responses, zero API cost
 - **`lensEnabled: true`** — Google Lens OCR (free) → LLM text-only (cheap). Avoids image tokens.
-- **Default** — Full image to LLM via OpenRouter (most tokens, most accurate)
+- **Default** — Full image to LLM (most tokens, most accurate)
 
 **RAG (Retrieval-Augmented Generation)**: Searches local knowledge base (`knowledge/{domain}/`) for relevant documentation and injects it into the system prompt. Enabled by default (`ragEnabled: true`).
 
-**Answer format**: `correctAnswer` saves actual content text (e.g., `"OrderMgr"`) NOT labels (e.g., `"A"`). The parser resolves labels to content using the choices array.
+**Answer format**: `correctAnswer` saves actual content text (e.g., `"OrderMgr"`) NOT labels (e.g., `"A"`). The parser resolves labels to content using the choices array. This is critical because answer order may be randomized between sessions.
 
-**Question databank**: 99 unique SFCC questions stored in `reviewer_databank.json`, synced to Vercel dashboard on startup.
+**Question databank**: Stored in `reviewer_databank.json`. Sync to Vercel is opt-in (`syncToVercel: false` by default).
 
-The Python client calls LLM models directly via OpenRouter (not through Vercel). Vercel serves as the dashboard and reviewer data store.
+**Dashboard display**: Shows only the resolved answers (not the question text).
+
+**Window capture**: Uses Win32 API (`GetClientRect`) to capture only the content area, excluding title bar and borders. Falls back to full window + 35px crop when unavailable. Supports wildcard title matching for windows with changing names (e.g., screenshots with timestamps).
 
 ## Security & Environment
 
-- **Never commit secrets**: All `.env*` files with real keys are gitignored
-- **OpenRouter Free Tier**: Use free models only
-- **OpenRouter Headers**: Always send `HTTP-Referer` and `X-Title` headers
+- **Never commit secrets**: All `.env*` files with real keys are gitignored (`config.json` is gitignored)
 - **Local Only**: Python client runs on localhost only, no external exposure
 
 ## Code Conventions
@@ -86,10 +96,11 @@ The Python client calls LLM models directly via OpenRouter (not through Vercel).
 
 ## Free Tier Constraints
 
-- **OpenRouter**: Free tier models only (check OpenRouter docs for current free models)
+- **Gemini API**: Free tier with `gemini-3.6-flash` (1M context, 15 RPM)
+- **OpenRouter**: Free tier models available as fallback
 - **Vercel**: Hobby plan (100GB bandwidth, 100GB-hours serverless)
 - **Python Client**: Runs locally, no cloud cost
-- **Rate Limits**: Respect OpenRouter rate limits (free tier: ~20 req/min)
+- **Google Lens OCR**: Free, no API key required
 
 ## Code Quality Standards
 

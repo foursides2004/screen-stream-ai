@@ -39,33 +39,48 @@
 | Lens OCR | ✅ `chrome-lens-py` | ✅ `chrome-lens-py` |
 
 ## Configuration
-- `config.json` contains runtime settings including `secretKey`, `apiBaseUrl`, `captureMode`, etc.
+- `config.json` contains runtime settings (gitignored, contains secrets)
 - Hotkey defaults are platform-aware (Ctrl+Alt on Windows, Cmd+Shift on macOS)
 - Default capture interval: 30 seconds
 - Default image format: WebP
+
+### LLM Provider
+- Set `geminiApiKey` for direct Gemini API (free tier, `gemini-3.6-flash` default)
+- Set `openrouterApiKey` for OpenRouter (fallback when geminiApiKey is empty)
+- Gemini uses OpenAI-compatible endpoint, same client code works for both
+
+### Window Capture
+- `captureMode: "window"` — captures specific window by title
+- Supports wildcard matching: type `T` at startup, enter `"Screenshot"` to match all screenshots
+- Uses Win32 `GetClientRect` to capture content area only (no title bar)
+- Falls back to full window + 35px crop when Win32 API unavailable
+
+### Sync
+- `syncToVercel: false` by default — databank stays local
+- Set `syncToVercel: true` to POST entries to Vercel on startup and per-capture
 
 ## Three Analysis Modes
 
 ### Mock Mode (`"mock": true`)
 - Canned responses, zero API cost
 - Returns realistic Q&A responses parseable by `parse_qa_from_response`
-- Saves to local `ReviewerDatabank` and syncs to Vercel backend
 
 ### Lens OCR Mode (`"lensEnabled": true`)
 1. **Google Lens OCR** extracts text from screenshot (free, no API key)
-2. **RAG** searches knowledge base for relevant documentation
-3. **LLM text-only** answers from extracted text + RAG context (cheap — no image tokens)
-
-Falls back to image analysis if OCR fails.
+2. **OCR quality check**: min 100 chars, >40% letter ratio, must contain "?" or choice labels
+3. If OCR is garbage → automatically falls back to image mode
+4. **RAG** searches knowledge base for relevant documentation
+5. **LLM text-only** answers from extracted text + RAG context (cheap — no image tokens)
 
 ### Full Image Mode (default)
-- Sends screenshot as base64 image to LLM via OpenRouter
+- Sends screenshot as base64 image to LLM
 - Most tokens, most accurate
 - RAG context still injected when `ragEnabled: true`
 
 ## Answer Format
 `correctAnswer` saves actual content text (e.g., `"OrderMgr"`) NOT labels (e.g., `"A"`).
 The parser resolves labels to content using the choices array.
+Answer order may be randomized between sessions, so content text is always stored.
 
 ## RAG (Retrieval-Augmented Generation)
 - Enabled by default (`ragEnabled: true`)
@@ -75,20 +90,22 @@ The parser resolves labels to content using the choices array.
 
 ## Question Databank
 - Local JSON storage: `reviewer_databank.json`
-- 99 unique SFCC questions (as of 2026-08-03)
-- Syncs to Vercel backend on startup
+- Syncs to Vercel backend only when `syncToVercel: true`
 - Tracks seen count, timestamps, domain
 
-## OpenRouter Config
+## Config Example
 ```json
 {
   "mock": false,
   "lensEnabled": true,
   "ragEnabled": true,
   "ragTopN": 3,
+  "syncToVercel": false,
+  "captureMode": "window",
+  "geminiApiKey": "your-gemini-api-key",
+  "geminiModel": "gemini-3.6-flash",
   "openrouterApiKey": "sk-or-v1-...",
-  "openrouterModel": "google/gemini-3.5-flash-lite",
-  "openrouterBaseUrl": "https://openrouter.ai/api/v1"
+  "openrouterModel": "google/gemini-3.5-flash-lite"
 }
 ```
 
