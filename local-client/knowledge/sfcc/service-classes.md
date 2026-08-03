@@ -1,34 +1,46 @@
-# SFCC Service Classes
+# SFCC Service Classes (dw.net package)
 
-SFCC provides built-in service classes for external system integrations. Each service class handles a specific protocol.
+## HTTPService
 
-## Available Service Classes
-
-### HTTPService (dw.net.HTTPService)
-- Used for making HTTP/HTTPS requests to external REST/SOAP APIs
-- Supports GET, POST, PUT, DELETE, PATCH methods
+```javascript
+var svc = ServiceModel.getService("serviceName");
+var result = svc.call(args);
+```
+- Protocol: HTTP/HTTPS
+- Supports: GET, POST, PUT, DELETE, PATCH
+- Used for REST and SOAP API integrations
 - Configured via Service Framework in Business Manager
 
-### HTTPFormService (dw.net.HTTPFormService)
-- Used for HTTP form-based integrations
-- Sends data as application/x-www-form-urlencoded
-- Commonly used for payment gateway and shipping carrier integrations
+## HTTPFormService
 
-### FTPService (dw.net.FTPService)
-- Used for standard FTP and SFTP file transfers
-- Supports file upload, download, and directory operations
-- Commonly used for catalog imports/exports and order exchanges
+```javascript
+var svc = ServiceModel.getService("serviceName");
+var result = svc.call(args);
+```
+- Protocol: HTTP/HTTPS
+- Content-Type: application/x-www-form-urlencoded
+- Used for form-based payment and shipping integrations
 
-### SMTPService (dw.net.SMTPService)
-- Used for sending emails via SMTP protocol
-- Configured with mail server credentials in Business Manager
+## FTPService
+
+```javascript
+var svc = ServiceModel.getService("serviceName");
+var result = svc.call(args);
+```
+- Protocol: FTP/SFTP
+- Operations: file upload, download, directory listing
+- Used for catalog imports/exports and order file exchanges
+
+## SMTPService
+
+```javascript
+var svc = ServiceModel.getService("serviceName");
+var result = svc.call(args);
+```
+- Protocol: SMTP
+- Used for transactional email delivery
 
 ## Service Framework
-- Services are configured in Business Manager under Administration > Operations > Services
+- Services are configured in Business Manager: Administration > Operations > Services
 - Each service has a service profile with connection credentials
-- Services are called via `.ServiceModel.getService(serviceID)`
-
-## Important Notes
-- WebService and RestService are NOT actual SFCC service class names
-- SOAP integrations are handled via HTTPService, not a separate SOAP class
-- All service classes are in the `dw.net` package
+- Service IDs are strings passed to `ServiceModel.getService()`
