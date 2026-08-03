@@ -90,7 +90,7 @@ class Config:
         "syncToVercel": False,
         **_DEFAULT_HOTKEYS,
         "geminiApiKey": "",
-        "geminiModel": "gemini-2.5-flash",
+        "geminiModel": "gemini-3.6-flash",
     }
 
     # Map env var names to config.json keys
