@@ -93,6 +93,19 @@ export default function ReviewerPage() {
     return date.toLocaleDateString();
   };
 
+  const handleDelete = useCallback(async (id: string) => {
+    try {
+      await fetch('/api/reviewer/entries', {
+        method: 'DELETE',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ id }),
+      });
+      setEntries((prev) => prev.filter((e) => e.id !== id));
+    } catch (err) {
+      console.error('Failed to delete entry:', err);
+    }
+  }, []);
+
   return (
     <div className="min-h-screen bg-background flex flex-col">
       <header className="border-b border-border bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60 sticky top-0 z-50">
@@ -220,6 +233,12 @@ export default function ReviewerPage() {
 
                 <footer className="flex items-center justify-between text-xs text-muted-foreground">
                   <span>Last seen {formatTime(entry.lastSeenAt)}</span>
+                  <button
+                    onClick={() => handleDelete(entry.id)}
+                    className="text-xs text-muted-foreground hover:text-red-500 transition-colors px-2 py-1 rounded hover:bg-red-500/10"
+                  >
+                    Delete
+                  </button>
                 </footer>
               </article>
             ))}

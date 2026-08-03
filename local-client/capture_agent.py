@@ -616,8 +616,8 @@ class CaptureAgent:
                                 },
                                 timeout=5,
                             )
-                        except Exception:
-                            pass  # Best-effort sync
+                        except Exception as sync_err:
+                            print(f"[WARN] Failed to sync to reviewer backend: {sync_err}")
                     else:
                         print("[REVIEWER] No structured data in response")
             else:
