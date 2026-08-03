@@ -8,17 +8,26 @@ A modular, end-to-end screen-reading AI assistant that captures a local display 
 Python Client                         Vercel Backend
 ─────────────                         ──────────────
 1. Capture screen (mss)
-2. Encode to base64
-3. IF mock=true: use MockResponder
-   ELSE: call Gemini via OpenRouter ─→ (direct API call, bypasses Vercel)
-4. Get response text
-5. Parse response for Q&A (parse_qa_from_response)
-6. Save to local ReviewerDatabank
-7. POST /api/reviewer/entries ─────→  8. Store entry, broadcastToSSE (type: "qa_entry")
-9. POST /api/submit ───────────────→  10. BroadcastToSSE (type: "analysis")
+2. IF mock=true: use MockResponder
+   ELSE IF lensEnabled=true:
+     a. Lens OCR extracts text (free, no API key)
+     b. Send text to Gemini (text-only, cheap)
+   ELSE:
+     Encode image to base64
+     Call Gemini via OpenRouter (image, more tokens)
+3. Get response text
+4. Parse response for Q&A (parse_qa_from_response)
+5. Save to local ReviewerDatabank
+6. POST /api/reviewer/entries ─────→  7. Store entry, broadcastToSSE (type: "qa_entry")
+8. POST /api/submit ───────────────→  9. BroadcastToSSE (type: "analysis")
 ```
 
-The Python client calls Gemini directly via OpenRouter (not through Vercel). Vercel serves as the dashboard and reviewer data store. A `mock` flag in `config.json` enables local development without consuming Gemini tokens.
+**Three analysis modes** (configured via `config.json`):
+- **`mock: true`** — Canned responses, zero API cost
+- **`lensEnabled: true`** — Google Lens OCR (free) → Gemini text-only (cheap). Avoids image tokens.
+- **Default** — Full image to Gemini via OpenRouter (most tokens, most accurate)
+
+The Python client calls Gemini directly via OpenRouter (not through Vercel). Vercel serves as the dashboard and reviewer data store.
 
 ## Security & Environment
 

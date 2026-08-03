@@ -52,11 +52,14 @@ A modular, end-to-end screen-reading AI assistant that captures a local display 
 ## Features
 
 - **Real-time screen analysis** — captures screen and streams AI responses live to the dashboard
+- **Three analysis modes** — Mock (free), Lens OCR (cheap), Full Image (accurate)
+- **Google Lens OCR** — Free text extraction from screenshots using Google's search index
 - **Multi-monitor support** — select which monitor to capture
 - **Window capture** — capture a specific window by title (Windows via `pygetwindow`, macOS via `pyobjc`)
 - **Auto-capture** — configurable interval (default: 30s) with hotkey toggle
 - **Image deduplication** — perceptual hash (pHash) to skip near-identical captures
 - **Domain context** — pass `--domain AWS` or `--domain SFCC` for exam-specific answers
+- **RAG (Retrieval-Augmented Generation)** — searches knowledge base for relevant documentation
 - **Multi-select awareness** — AI prompt instructs model to find ALL correct answers
 - **Streaming dashboard** — SSE-based real-time UI with markdown rendering
 - **Batch testing** — test-runner for validating against 50+ images
@@ -282,6 +285,13 @@ Server-Sent Events endpoint for real-time dashboard updates.
 | `targetWindowTitle` | *(empty)* | Window title for window capture mode |
 | `deduplicationEnabled` | `false` | Skip near-identical images |
 | `deduplicationThreshold` | `0.95` | pHash similarity threshold (0-1) |
+| `mock` | `false` | Use canned responses (no API cost) |
+| `lensEnabled` | `false` | Use Google Lens OCR → Gemini text-only (cheap) |
+| `openrouterApiKey` | *(required when mock=false)* | OpenRouter API key |
+| `openrouterModel` | `google/gemini-3.5-flash-lite` | Model for analysis |
+| `openrouterBaseUrl` | `https://openrouter.ai/api/v1` | OpenRouter API base URL |
+| `ragEnabled` | `true` | Enable RAG knowledge base search |
+| `ragTopN` | `3` | Number of RAG chunks to retrieve |
 
 ## Project Commands
 
