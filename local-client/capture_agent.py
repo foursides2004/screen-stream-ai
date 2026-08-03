@@ -218,12 +218,25 @@ class ScreenCapture:
 
         print("-" * 60)
         print(f"  [ 0] Full Monitor Capture")
+        print(f"  [ T] Type a title to match (e.g., 'Screenshot' matches all screenshots)")
         print("-" * 60)
 
         while True:
             try:
-                choice = input(f"\nSelect window [0-{len(windows)}]: ").strip()
+                choice = input(f"\nSelect window [0-{len(windows)} or T]: ").strip()
                 if not choice:
+                    continue
+                if choice.upper() == "T":
+                    pattern = input("Enter title to match (substring, case-insensitive): ").strip()
+                    if pattern:
+                        # Find first match
+                        for w in windows:
+                            if pattern.lower() in w["title"].lower():
+                                print(f"\n[SELECTED] '{w['title']}' ({w['width']}x{w['height']})")
+                                # Store the pattern, not the full title
+                                w["_match_pattern"] = pattern
+                                return w
+                        print(f"No window matching '{pattern}' found")
                     continue
                 idx = int(choice)
                 if idx == 0:
@@ -903,8 +916,10 @@ class CaptureAgent:
             if get_window_list():
                 selected = self.capture.select_window_interactive()
                 if selected:
-                    self.capture.active_window_title = selected["title"]
-                    print(f"[MODE] Switched to window: '{selected['title']}'")
+                    # Use match pattern if provided, otherwise full title
+                    title = selected.get("_match_pattern") or selected["title"]
+                    self.capture.active_window_title = title
+                    print(f"[MODE] Switched to window: '{title}'")
                 else:
                     # User chose monitor fallback
                     self.config.set("captureMode", "monitor")
@@ -948,8 +963,9 @@ class CaptureAgent:
             else:
                 # User selected a window — store in memory only, not persisted
                 self.config.set("captureMode", "window")
-                self.capture.active_window_title = selected_window["title"]
-                print(f"Target Window: '{selected_window['title']}'")
+                title = selected_window.get("_match_pattern") or selected_window["title"]
+                self.capture.active_window_title = title
+                print(f"Target Window: '{title}'")
         else:
             print(f"Mode: {self.config.get('captureMode', 'monitor')}")
             if self.config.get("captureMode") == "monitor":
