@@ -562,7 +562,7 @@ class CaptureAgent:
         # Gemini client (used when mock=false)
         self.gemini_client = GeminiClient(
             api_key=self.config.get("openrouterApiKey", ""),
-            model=self.config.get("openrouterModel", "google/gemini-3.1-flash-lite"),
+            model=self.config.get("openrouterModel", "google/gemini-3.5-flash-lite"),
             base_url=self.config.get("openrouterBaseUrl", "https://openrouter.ai/api/v1"),
         )
 
@@ -595,6 +595,32 @@ class CaptureAgent:
     def _signal_handler(self, signum, frame):
         print("\n[SIGNAL] Shutdown signal received")
         self.handle_quit()
+
+    def sync_databank_to_vercel(self) -> None:
+        """Sync all local databank entries to Vercel on startup."""
+        entries = self.databank.get_all()
+        if not entries:
+            return
+
+        print(f"[SYNC] Syncing {len(entries)} local entries to Vercel...")
+        synced = 0
+        for entry in entries:
+            try:
+                r = requests.post(
+                    f"{self.api.base_url}/api/reviewer/entries",
+                    json={
+                        "question": entry.question,
+                        "choices": entry.choices,
+                        "correctAnswer": entry.correct_answer,
+                        "domain": entry.domain,
+                    },
+                    timeout=5,
+                )
+                if r.status_code == 200:
+                    synced += 1
+            except Exception:
+                pass
+        print(f"[SYNC] Synced {synced}/{len(entries)} entries")
 
     @staticmethod
     def _strip_json_block(text: str) -> str:
@@ -841,6 +867,9 @@ class CaptureAgent:
         print(f"  {self.config.get('cycleModeHotkey')} - Cycle capture mode (monitor/window)")
         print(f"  {self.config.get('quitHotkey')} - Quit")
         print("=" * 50 + "\n")
+
+        # Sync local databank to Vercel on startup
+        self.sync_databank_to_vercel()
 
         # Start auto-capture if enabled
         if self.config.get("autoCapture", True):
