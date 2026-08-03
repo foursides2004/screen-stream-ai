@@ -68,18 +68,24 @@ def parse_qa_from_response(text: str) -> Optional[dict]:
         answer = [answer]
 
     # Resolve labels to actual answer content
-    # e.g., ["A", "B"] → ["Paris", "London"] (if choices are A. Paris, B. London)
+    # e.g., ["A", "B"] → ["Online", "Inactive"] (if choices are A. Online, B. Inactive)
+    # This is critical because answer order may be randomized between sessions
     choices = data.get("choices", [])
     label_to_content = {c["label"].strip().upper(): c["content"].strip() for c in choices if isinstance(c, dict)}
 
     resolved = []
     for a in answer:
-        a_upper = a.strip().upper()
+        a_stripped = a.strip()
+        a_upper = a_stripped.upper()
         if a_upper in label_to_content:
             resolved.append(label_to_content[a_upper])
+        elif len(a_stripped) <= 2 and a_stripped.isalpha():
+            # Single/double letter that doesn't match any label — drop it
+            # (likely a stale label from a randomized answer)
+            print(f"[PARSE] Dropping unresolved label '{a_stripped}' (not in choices)")
         else:
-            # Not a label — keep as-is (fill-in-the-blank, True/False, etc.)
-            resolved.append(a.strip())
+            # Not a label — keep as-is (fill-in-the-blank, True/False, content text, etc.)
+            resolved.append(a_stripped)
 
     return {
         "question": data["question"].strip(),

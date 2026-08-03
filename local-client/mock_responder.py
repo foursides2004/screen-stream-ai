@@ -12,8 +12,10 @@ from itertools import cycle
 # Mock responses that match the format parse_qa_from_response expects:
 # - Plain text answer at the top
 # - A ```json block with question, choices, correctAnswer
+# IMPORTANT: correctAnswer uses actual answer content, NOT labels (A, B, C)
+# because answer order may be randomized between sessions
 MOCK_RESPONSES = [
-    """A, B, D
+    """CurrentSession, CurrentRequest, CurrentCustomer
 
 ```json
 {
@@ -24,7 +26,7 @@ MOCK_RESPONSES = [
     {"label": "C", "content": "InvalidAttribute"},
     {"label": "D", "content": "CurrentCustomer"}
   ],
-  "correctAnswer": ["A", "B", "D"]
+  "correctAnswer": ["CurrentSession", "CurrentRequest", "CurrentCustomer"]
 }
 ```""",
 
@@ -39,11 +41,11 @@ MOCK_RESPONSES = [
     {"label": "C", "content": "Berlin"},
     {"label": "D", "content": "Madrid"}
   ],
-  "correctAnswer": ["B"]
+  "correctAnswer": ["Paris"]
 }
 ```""",
 
-    """A, C
+    """GET, PUT
 
 ```json
 {
@@ -54,11 +56,11 @@ MOCK_RESPONSES = [
     {"label": "C", "content": "PUT"},
     {"label": "D", "content": "PATCH"}
   ],
-  "correctAnswer": ["A", "C"]
+  "correctAnswer": ["GET", "PUT"]
 }
 ```""",
 
-    """B, D, E
+    """301 Moved Permanently, 302 Found, 307 Temporary Redirect
 
 ```json
 {
@@ -70,11 +72,11 @@ MOCK_RESPONSES = [
     {"label": "D", "content": "302 Found"},
     {"label": "E", "content": "307 Temporary Redirect"}
   ],
-  "correctAnswer": ["B", "D", "E"]
+  "correctAnswer": ["301 Moved Permanently", "302 Found", "307 Temporary Redirect"]
 }
 ```""",
 
-    """C
+    """Cascading Style Sheets
 
 ```json
 {
@@ -85,7 +87,7 @@ MOCK_RESPONSES = [
     {"label": "C", "content": "Cascading Style Sheets"},
     {"label": "D", "content": "Colorful Style Syntax"}
   ],
-  "correctAnswer": ["C"]
+  "correctAnswer": ["Cascading Style Sheets"]
 }
 ```""",
 ]

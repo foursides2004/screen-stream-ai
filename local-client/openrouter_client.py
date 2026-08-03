@@ -36,17 +36,18 @@ AFTER your answer, you MUST also output a JSON code block with this exact struct
     {"label": "A", "content": "choice text"},
     {"label": "B", "content": "choice text"}
   ],
-  "correctAnswer": ["A"]
+  "correctAnswer": ["choice text of correct answer"]
 }
 ```
 
+IMPORTANT: In correctAnswer, put the ACTUAL ANSWER CONTENT (the full text of the correct choice), NOT the label letter. This is critical because answer order may be randomized between sessions, so "A" in one session might be a different answer in another.
 For questions without choices (fill-in-the-blank), use an empty choices array and put the answer text in correctAnswer.
-For multi-select questions, list all correct labels in the correctAnswer array.
+For multi-select questions, list all correct answer contents in the correctAnswer array.
 
 EXAMPLES OF GOOD RESPONSES:
-- "C" (for a single multiple choice)
+- "Online" (not "A" — put the actual answer text)
 - "Paris" (for "What is the capital of France?")
-- "A, B, D" (for multi-select with options A, B, D correct)
+- "Online, Inactive, Archived" (for multi-select — all correct answer contents)
 - "CurrentSession, CurrentRequest, CurrentCustomer, CurrentHttpParameterMap" (for multi-select)
 
 EXAMPLES OF BAD RESPONSES:
