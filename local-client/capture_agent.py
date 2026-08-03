@@ -159,8 +159,6 @@ class Config:
         if self.get("captureMode") not in ("monitor", "window"):
             print("[ERROR] captureMode must be 'monitor' or 'window'")
             return False
-        if self.get("captureMode") == "window" and not self.get("targetWindowTitle"):
-            print("[WARN] captureMode is 'window' but targetWindowTitle is empty - will fallback to monitor")
         if not self.get("mock", False) and not self.get("openrouterApiKey"):
             print("[ERROR] openrouterApiKey not configured — required when mock=false (set in config.json or OPENROUTER_API_KEY env var)")
             return False
@@ -278,9 +276,9 @@ class ScreenCapture:
             print("[ERROR] Window capture not available on this platform - falling back to monitor capture")
             return self._capture_monitor()
 
-        target_title = self.config.get("targetWindowTitle", "")
+        target_title = self._active_window_title or ""
         if not target_title:
-            print("[ERROR] targetWindowTitle not configured - falling back to monitor capture")
+            print("[ERROR] No window selected - falling back to monitor capture")
             return self._capture_monitor()
 
         window = self.find_window_by_title(target_title)
@@ -593,6 +591,7 @@ class CaptureAgent:
 
         # State
         self.running = True
+        self._active_window_title: Optional[str] = None  # set at startup, not persisted
         self.capture_in_progress = False
         self.auto_capture_running = False
         self.auto_capture_thread: Optional[threading.Thread] = None
@@ -857,17 +856,25 @@ class CaptureAgent:
         current = self.config.get("captureMode", "monitor")
         new_mode = "window" if current == "monitor" else "monitor"
         self.config.set("captureMode", new_mode)
-        print(f"[MODE] Switched to: {new_mode}")
 
         if new_mode == "window":
-            title = self.config.get("targetWindowTitle", "")
-            if title:
-                print(f"[MODE] Target window: '{title}'")
+            # Prompt for window selection
+            if get_window_list():
+                selected = self.capture.select_window_interactive()
+                if selected:
+                    self._active_window_title = selected["title"]
+                    print(f"[MODE] Switched to window: '{selected['title']}'")
+                else:
+                    # User chose monitor fallback
+                    self.config.set("captureMode", "monitor")
+                    print(f"[MODE] No window selected, staying on monitor")
             else:
-                print("[MODE] No target window configured - will use monitor fallback")
+                print("[MODE] Window capture not available, staying on monitor")
+                self.config.set("captureMode", "monitor")
         else:
+            self._active_window_title = None
             monitor_idx = self.config.get("monitorIndex", 1)
-            print(f"[MODE] Monitor index: {monitor_idx}")
+            print(f"[MODE] Switched to monitor: {monitor_idx}")
 
     def handle_quit(self) -> None:
         """Handle quit request."""
@@ -890,27 +897,21 @@ class CaptureAgent:
             print(f"Domain: {domain}")
         print(f"Mode: {self.config.get('captureMode', 'monitor')}")
 
-        # Interactive window selection at startup (skip if target window already set)
-        if get_window_list() and not self.config.get("targetWindowTitle"):
+        # Interactive window selection at startup
+        if get_window_list():
             selected_window = self.capture.select_window_interactive()
             if selected_window is None:
                 # User chose monitor mode
                 self.config.set("captureMode", "monitor")
                 print(f"Monitor: {self.config.get('monitorIndex', 1)}")
             else:
-                # User selected a window
+                # User selected a window — store in memory only, not persisted
                 self.config.set("captureMode", "window")
-                self.config.set("targetWindowTitle", selected_window["title"])
+                self._active_window_title = selected_window["title"]
                 print(f"Target Window: '{selected_window['title']}'")
         else:
             print(f"Mode: {self.config.get('captureMode', 'monitor')}")
-            if self.config.get("captureMode") == "window":
-                title = self.config.get("targetWindowTitle", "")
-                if title:
-                    print(f"Target Window: '{title}'")
-                else:
-                    print("Target Window: (not set - will use monitor fallback)")
-            else:
+            if self.config.get("captureMode") == "monitor":
                 print(f"Monitor: {self.config.get('monitorIndex', 1)}")
 
         print(f"Max Width: {self.config.get('maxWidth', 1920)}")
@@ -929,7 +930,7 @@ class CaptureAgent:
         if self.config.get("captureMode") == "window" and get_window_list():
             print("\nAvailable windows:")
             for w in self.capture.get_window_list():
-                marker = " >>>" if self.config.get("targetWindowTitle", "").lower() in w["title"].lower() else ""
+                marker = " >>>" if self._active_window_title and self._active_window_title.lower() in w["title"].lower() else ""
                 print(f"  '{w['title']}' ({w['width']}x{w['height']}){marker}")
 
         print("-" * 50)
@@ -962,6 +963,17 @@ class CaptureAgent:
 
 
 def main():
+    # Set DPI awareness so pygetwindow, GetClientRect, and mss use the same coordinates
+    try:
+        import ctypes
+        ctypes.windll.shcore.SetProcessDpiAwareness(2)  # Per-Monitor DPI Aware
+    except Exception:
+        try:
+            import ctypes
+            ctypes.windll.user32.SetProcessDPIAware()
+        except Exception:
+            pass
+
     parser = argparse.ArgumentParser(description="Screen Stream AI - Local Capture Agent")
     parser.add_argument("--domain", type=str, default="", help="Domain context for exam questions (e.g., SFCC, AWS)")
     args = parser.parse_args()
