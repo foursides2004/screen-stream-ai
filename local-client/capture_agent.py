@@ -749,12 +749,8 @@ class CaptureAgent:
 
                 # Submit to Vercel for dashboard display
                 if parsed:
-                    # Build a readable summary with resolved answers
-                    answer_lines = [f"  {a}" for a in parsed["correctAnswer"]]
-                    dashboard_text = (
-                        f"Q: {parsed['question']}\n\n"
-                        f"Answer:\n" + "\n".join(answer_lines)
-                    )
+                    # Show only the resolved answers
+                    dashboard_text = "\n".join(parsed["correctAnswer"])
                 else:
                     dashboard_text = self._strip_json_block(response)
                 self.api.submit_result(dashboard_text)
