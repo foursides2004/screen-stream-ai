@@ -699,6 +699,14 @@ class CaptureAgent:
             if not img:
                 return
 
+            # Debug: save captured image for inspection
+            try:
+                debug_path = os.path.join(os.path.dirname(__file__), "debug_capture.png")
+                img.save(debug_path)
+                print(f"[DEBUG] Saved capture to {debug_path} ({img.width}x{img.height})")
+            except Exception:
+                pass
+
             img = self.capture.downscale_if_needed(img)
 
             # Perceptual hash deduplication
