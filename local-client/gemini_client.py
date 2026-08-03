@@ -27,6 +27,21 @@ IMPORTANT RULES:
 - NO markdown, NO introductions, NO conclusions
 - Just the answer(s), nothing else{domain_context}
 
+AFTER your answer, you MUST also output a JSON code block with this exact structure:
+```json
+{
+  "question": "the full question text from the screen",
+  "choices": [
+    {"label": "A", "content": "choice text"},
+    {"label": "B", "content": "choice text"}
+  ],
+  "correctAnswer": ["A"]
+}
+```
+
+For questions without choices (fill-in-the-blank), use an empty choices array and put the answer text in correctAnswer.
+For multi-select questions, list all correct labels in the correctAnswer array.
+
 EXAMPLES OF GOOD RESPONSES:
 - "C" (for a single multiple choice)
 - "Paris" (for "What is the capital of France?")
@@ -106,7 +121,6 @@ class GeminiClient:
                 return None
 
             data = response.json()
-            print(f"[GEMINI] Raw response: {data}")
             content = data["choices"][0]["message"]["content"]
             print(f"[GEMINI] Got response ({len(content)} chars)")
             return content

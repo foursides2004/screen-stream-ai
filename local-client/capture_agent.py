@@ -596,6 +596,12 @@ class CaptureAgent:
         print("\n[SIGNAL] Shutdown signal received")
         self.handle_quit()
 
+    @staticmethod
+    def _strip_json_block(text: str) -> str:
+        """Remove ```json ... ``` blocks from response text for clean dashboard display."""
+        import re
+        return re.sub(r'```json\s*\n.*?\n\s*```', '', text, flags=re.DOTALL).strip()
+
     def _is_duplicate_prompt(self, prompt: str) -> bool:
         """Check if prompt is similar to last prompt using SequenceMatcher."""
         if not self.config.get("deduplicationEnabled", True):
@@ -689,8 +695,9 @@ class CaptureAgent:
                 else:
                     print("[REVIEWER] No structured data in response")
 
-                # Submit to Vercel for dashboard display
-                self.api.submit_result(response)
+                # Submit to Vercel for dashboard display (strip JSON block)
+                dashboard_text = self._strip_json_block(response)
+                self.api.submit_result(dashboard_text)
             else:
                 print("[CAPTURE] No response")
 
@@ -785,8 +792,8 @@ class CaptureAgent:
             print(f"Domain: {domain}")
         print(f"Mode: {self.config.get('captureMode', 'monitor')}")
 
-        # Interactive window selection at startup
-        if get_window_list():
+        # Interactive window selection at startup (skip if target window already set)
+        if get_window_list() and not self.config.get("targetWindowTitle"):
             selected_window = self.capture.select_window_interactive()
             if selected_window is None:
                 # User chose monitor mode
