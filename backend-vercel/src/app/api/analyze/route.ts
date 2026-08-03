@@ -11,7 +11,7 @@ const openrouter = createOpenAI({
   apiKey: process.env.OPENROUTER_API_KEY,
 });
 
-const MODEL = process.env.OPENROUTER_MODEL || 'google/gemini-3.1-flash-lite';
+const MODEL = process.env.OPENROUTER_MODEL || 'google/gemini-3.5-flash-lite';
 const APP_SECRET = process.env.APP_SECRET_KEY;
 
 const OPENROUTER_HEADERS: Record<string, string> = {
