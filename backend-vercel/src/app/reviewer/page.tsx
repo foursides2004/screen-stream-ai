@@ -202,7 +202,9 @@ export default function ReviewerPage() {
                 {entry.choices.length > 0 && (
                   <div className="space-y-1.5 mb-3">
                     {entry.choices.map((choice) => {
-                      const isCorrect = entry.correctAnswer.includes(choice.label);
+                      const isCorrect =
+                        entry.correctAnswer.includes(choice.label) ||
+                        entry.correctAnswer.includes(choice.content);
                       return (
                         <div
                           key={choice.label}
