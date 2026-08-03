@@ -29,6 +29,13 @@ The Python client calls Gemini directly via OpenRouter (not through Vercel). Ver
 
 ## Code Conventions
 
+### Knowledge Base & RAG Rules
+- **NEVER hardcode exam answers** in knowledge base files — only factual documentation (API return types, syntax, definitions)
+- **NEVER assume what the correct answer is** — the model reads docs and determines answers itself
+- **NEVER add "common exam question" patterns** with predetermined correct answers
+- Knowledge base files contain: method signatures, return types, parameter descriptions, syntax examples
+- The model uses this factual documentation to reason about answers — we don't guide it
+
 ### TypeScript/Next.js
 - **Strict TypeScript**: `strict: true`, no `any`, prefer `unknown` and type guards
 - **App Router**: Use Server Components by default, Client Components only when needed (`'use client'`)
