@@ -67,8 +67,22 @@ def parse_qa_from_response(text: str) -> Optional[dict]:
     if isinstance(answer, str):
         answer = [answer]
 
+    # Resolve labels to actual answer content
+    # e.g., ["A", "B"] → ["Paris", "London"] (if choices are A. Paris, B. London)
+    choices = data.get("choices", [])
+    label_to_content = {c["label"].strip().upper(): c["content"].strip() for c in choices if isinstance(c, dict)}
+
+    resolved = []
+    for a in answer:
+        a_upper = a.strip().upper()
+        if a_upper in label_to_content:
+            resolved.append(label_to_content[a_upper])
+        else:
+            # Not a label — keep as-is (fill-in-the-blank, True/False, etc.)
+            resolved.append(a.strip())
+
     return {
         "question": data["question"].strip(),
         "choices": data["choices"],
-        "correctAnswer": answer,
+        "correctAnswer": resolved,
     }
