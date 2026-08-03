@@ -2,14 +2,14 @@
 
 ## Campaign Qualifiers
 
-Campaign qualifiers determine when a campaign is applicable. Valid qualifiers:
+Campaign qualifiers determine which customers a campaign applies to. There are four qualifier types:
 
-1. **Coupon Code** — Customer enters a specific coupon code
-2. **Source Code** — Customer arrives via a specific source/traffic origin
-3. **Order Total** — Order meets minimum/maximum total thresholds
-4. **Customer Groups** — Customer belongs to specific customer segments
+1. **Schedule** — Start and end time/date (determines when campaign is active)
+2. **Coupons** — System-generated or merchant-defined codes shoppers enter for discounts
+3. **Customer Groups** — Target specific shoppers (System: Everyone/Registered/Unregistered, Static: manually added, Dynamic: rule-based)
+4. **Source Codes** — Codes attached to site URL identifying traffic origin, stored in browser cookie
 
-All four are valid campaign qualifiers in SFCC.
+A promotion can have up to 3 qualifier conditions (customer group, coupon, source code). The `qualifierMatchMode` determines whether **all** or **any** conditions must be satisfied.
 
 ## Campaign Structure
 

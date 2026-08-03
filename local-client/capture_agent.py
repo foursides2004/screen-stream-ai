@@ -31,6 +31,7 @@ from reviewer_databank import ReviewerDatabank
 from parse_response import parse_qa_from_response
 from gemini_client import GeminiClient
 from mock_responder import MockResponder
+from lens_client import get_lens_client
 from platform_utils import (
     IS_WINDOWS,
     IS_MACOS,
@@ -84,6 +85,7 @@ class Config:
         "openrouterBaseUrl": "https://openrouter.ai/api/v1",
         "ragEnabled": True,
         "ragTopN": 3,
+        "lensEnabled": False,
         **_DEFAULT_HOTKEYS,
     }
 
@@ -679,12 +681,15 @@ class CaptureAgent:
             self.capture.update_phash(img)
 
             domain = self.config.get("domain", "")
+            timeout = self.config.get("requestTimeout", 30)
 
-            # Branch based on mock flag
+            # Branch based on mode: mock → lens+text → image
             if self.config.get("mock", False):
                 response = self.mock_responder.generate()
+            elif self.config.get("lensEnabled", False):
+                # Lens pipeline: OCR → text-only Gemini (no image tokens)
+                response = self._analyze_with_lens(img, domain, timeout)
             else:
-                timeout = self.config.get("requestTimeout", 30)
                 response = self.gemini_client.analyze(data_url, domain, timeout=timeout)
 
             if response:
@@ -734,6 +739,52 @@ class CaptureAgent:
         finally:
             self.capture_in_progress = False
             print("=" * 50 + "\n")
+
+    def _analyze_with_lens(self, img, domain: str, timeout: int) -> Optional[str]:
+        """Lens pipeline: OCR screenshot → send text to Gemini (no image tokens).
+
+        This is much cheaper than sending images to Gemini because:
+        1. Google Lens OCR is free
+        2. Text-only Gemini prompts use far fewer tokens than image prompts
+        """
+        import tempfile
+
+        tmp_path = None
+        try:
+            # Save image to temp file for Lens
+            from io import BytesIO
+            buf = BytesIO()
+            img.save(buf, format="PNG")
+            buf.seek(0)
+
+            with tempfile.NamedTemporaryFile(suffix='.png', delete=False) as f:
+                f.write(buf.read())
+                tmp_path = f.name
+
+            # Step 1: OCR with Google Lens (free)
+            lens = get_lens_client()
+            ocr_text = lens.ocr_from_path(tmp_path)
+
+            if not ocr_text:
+                print("[LENS] OCR returned no text, falling back to image analysis")
+                data_url = self.capture.encode_image(img)
+                return self.gemini_client.analyze(data_url, domain, timeout=timeout)
+
+            print(f"[LENS] OCR extracted {len(ocr_text)} chars")
+            print(f"[LENS] Text preview: {ocr_text[:200]}...")
+
+            # Step 2: Send text to Gemini (text-only, no image)
+            response = self.gemini_client.analyze_text(ocr_text, domain, timeout=timeout)
+            return response
+
+        except Exception as e:
+            print(f"[LENS] Pipeline error: {e}, falling back to image analysis")
+            data_url = self.capture.encode_image(img)
+            return self.gemini_client.analyze(data_url, domain, timeout=timeout)
+
+        finally:
+            if tmp_path and os.path.exists(tmp_path):
+                os.unlink(tmp_path)
 
     def toggle_auto_capture(self) -> None:
         """Toggle auto-capture on/off."""

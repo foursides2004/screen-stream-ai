@@ -6,6 +6,9 @@ pynput>=1.7.6
 python-dotenv>=1.0.1
 websockets>=12.0
 
+# Google Lens OCR (free, no API key)
+chrome-lens-py>=3.4.0
+
 # Windows only — window capture and selection
 pygetwindow>=0.0.9; sys_platform == "win32"
 

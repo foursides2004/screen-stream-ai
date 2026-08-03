@@ -12,10 +12,12 @@
 ## Key Files
 - `capture_agent.py` — Main capture agent with Config, ScreenCapture, APIClient, HotkeyManager, CaptureAgent classes
 - `gemini_client.py` — Gemini API client (calls OpenRouter directly, same prompt as Vercel backend)
+- `lens_client.py` — Google Lens OCR client (free, no API key — uses chrome-lens-py)
 - `mock_responder.py` — Mock response generator for development (returns valid Q&A format)
 - `platform_utils.py` — Cross-platform window enumeration (Windows: pygetwindow, macOS: Quartz)
 - `reviewer_databank.py` — Local JSON Q&A storage
 - `parse_response.py` — Parse structured Q&A from Gemini responses
+- `rag_search.py` — RAG (Retrieval-Augmented Generation) search over knowledge base
 - `requirements.txt` — Python dependencies (platform-conditional)
 - `config.json` — Runtime configuration (gitignored, auto-created with defaults)
 
@@ -43,10 +45,28 @@ Set `"mock": true` in `config.json` to skip Gemini API calls and use canned resp
 
 When `mock: false`, the Python client calls Gemini directly via OpenRouter. Requires `openrouterApiKey` in `config.json`.
 
+## Lens OCR Mode (Free, No API Key)
+Set `"lensEnabled": true` in `config.json` to use the Lens pipeline:
+1. **Google Lens OCR** extracts text from screenshot (free, no API key)
+2. **Gemini text-only** answers the question from extracted text (cheap — no image tokens)
+
+This is much cheaper than sending images to Gemini because:
+- Google Lens OCR uses their full search index (very accurate)
+- Text-only Gemini prompts use far fewer tokens than image prompts
+- Falls back to image analysis if OCR fails
+
+```json
+{
+  "lensEnabled": true,
+  "mock": false
+}
+```
+
 ## Gemini / OpenRouter Config
 ```json
 {
   "mock": false,
+  "lensEnabled": true,
   "openrouterApiKey": "sk-or-v1-...",
   "openrouterModel": "google/gemini-3.1-flash-lite",
   "openrouterBaseUrl": "https://openrouter.ai/api/v1"

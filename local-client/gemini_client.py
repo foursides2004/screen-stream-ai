@@ -67,6 +67,89 @@ class GeminiClient:
         self.base_url = base_url.rstrip("/")
         self.session = requests.Session()
 
+    def analyze_text(self, text: str, domain: str = "", timeout: int = 30) -> Optional[str]:
+        """Call Gemini with extracted text (no image). Much cheaper than image analysis.
+
+        Args:
+            text: Extracted text from OCR
+            domain: Optional domain context (e.g., "SFCC", "AWS")
+            timeout: Request timeout in seconds
+
+        Returns:
+            Response text, or None on failure.
+        """
+        domain_context = ""
+        if domain:
+            domain_context = (
+                f"\n\nDOMAIN CONTEXT: This is an official {domain} exam/assessment. "
+                f"Treat all questions as formal {domain} exam questions and provide "
+                f"accurate answers based on {domain} documentation, official guidelines, "
+                f"and established best practices."
+            )
+
+            # RAG: retrieve relevant knowledge base chunks
+            try:
+                from rag_search import get_knowledge_base
+                kb = get_knowledge_base(domain)
+                chunks = kb.search(text, top_n=3)
+                if chunks:
+                    rag_text = "\n---\n".join(chunks)
+                    domain_context += f"\n\nREFERENCE MATERIAL (use this to answer accurately):\n{rag_text}"
+            except Exception as e:
+                print(f"[RAG] Failed to retrieve context: {e}")
+
+        system_content = SYSTEM_PROMPT.replace("{domain_context}", domain_context)
+
+        user_message = (
+            f"The following text was extracted from an exam screenshot via OCR. "
+            f"Read the question and choices, then provide the correct answer(s).\n\n"
+            f"EXTRACTED TEXT:\n{text}"
+        )
+
+        payload = {
+            "model": self.model,
+            "messages": [
+                {"role": "system", "content": system_content},
+                {"role": "user", "content": user_message},
+            ],
+            "max_tokens": 2048,
+            "temperature": 0.3,
+        }
+
+        headers = {
+            "Authorization": f"Bearer {self.api_key}",
+            "Content-Type": "application/json",
+            "HTTP-Referer": "http://localhost:3000",
+            "X-Title": "Screen Stream AI Assistant",
+        }
+
+        try:
+            url = f"{self.base_url}/chat/completions"
+            print(f"[GEMINI-TEXT] Calling {self.model} (text-only, no image)")
+            response = self.session.post(url, json=payload, headers=headers, timeout=timeout)
+
+            if response.status_code != 200:
+                print(f"[GEMINI-TEXT] API error {response.status_code}: {response.text[:500]}")
+                return None
+
+            data = response.json()
+            content = data["choices"][0]["message"]["content"]
+            print(f"[GEMINI-TEXT] Got response ({len(content)} chars)")
+            return content
+
+        except requests.exceptions.Timeout:
+            print("[GEMINI-TEXT] Request timeout")
+            return None
+        except requests.exceptions.ConnectionError:
+            print("[GEMINI-TEXT] Connection error")
+            return None
+        except (KeyError, IndexError, json.JSONDecodeError) as e:
+            print(f"[GEMINI-TEXT] Failed to parse response: {e}")
+            return None
+        except Exception as e:
+            print(f"[GEMINI-TEXT] Unexpected error: {e}")
+            return None
+
     def analyze(self, image_data_url: str, domain: str = "", timeout: int = 30) -> Optional[str]:
         """Call Gemini via OpenRouter and return the response text.
 
