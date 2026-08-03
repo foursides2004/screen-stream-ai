@@ -1,0 +1,224 @@
+{
+  "timestamp": "2026-08-03T11:49:32.924829+00:00",
+  "total": 50,
+  "new": 9,
+  "duplicates_same": 0,
+  "duplicates_mismatch": 0,
+  "failed": 41,
+  "databank_before": 55,
+  "databank_after": 64,
+  "mismatches": [],
+  "new_entries": [
+    {
+      "file": "question_01.png",
+      "question": "What does enabling hang detection do?",
+      "answer": "B"
+    },
+    {
+      "file": "question_02.png",
+      "question": "Address suggestion integration should be",
+      "answer": "A"
+    },
+    {
+      "file": "question_03.png",
+      "question": "which are different Promotion qualifier",
+      "answer": "A, B, C"
+    },
+    {
+      "file": "question_04.png",
+      "question": "What action cannot be achieved in DYNAMIC groups?",
+      "answer": "D"
+    },
+    {
+      "file": "question_05.png",
+      "question": "How do you create a new slot in Business Manager?",
+      "answer": "C"
+    },
+    {
+      "file": "question_06.png",
+      "question": "Long form of ISML",
+      "answer": "D"
+    },
+    {
+      "file": "question_07.png",
+      "question": "A custom object is a type of:",
+      "answer": "C"
+    },
+    {
+      "file": "question_08.png",
+      "question": "does remote include template inherit cache of parent template",
+      "answer": "no"
+    },
+    {
+      "file": "question_09.png",
+      "question": "What is Circuit Breaker?",
+      "answer": "D"
+    }
+  ],
+  "failed_list": [
+    {
+      "file": "question_10.png",
+      "reason": "NO_RESPONSE"
+    },
+    {
+      "file": "question_11.png",
+      "reason": "NO_RESPONSE"
+    },
+    {
+      "file": "question_12.png",
+      "reason": "NO_RESPONSE"
+    },
+    {
+      "file": "question_13.png",
+      "reason": "NO_RESPONSE"
+    },
+    {
+      "file": "question_14.png",
+      "reason": "NO_RESPONSE"
+    },
+    {
+      "file": "question_15.png",
+      "reason": "NO_RESPONSE"
+    },
+    {
+      "file": "question_16.png",
+      "reason": "NO_RESPONSE"
+    },
+    {
+      "file": "question_17.png",
+      "reason": "NO_RESPONSE"
+    },
+    {
+      "file": "question_18.png",
+      "reason": "NO_RESPONSE"
+    },
+    {
+      "file": "question_19.png",
+      "reason": "NO_RESPONSE"
+    },
+    {
+      "file": "question_20.png",
+      "reason": "NO_RESPONSE"
+    },
+    {
+      "file": "question_21.png",
+      "reason": "NO_RESPONSE"
+    },
+    {
+      "file": "question_22.png",
+      "reason": "NO_RESPONSE"
+    },
+    {
+      "file": "question_23.png",
+      "reason": "NO_RESPONSE"
+    },
+    {
+      "file": "question_24.png",
+      "reason": "NO_RESPONSE"
+    },
+    {
+      "file": "question_25.png",
+      "reason": "NO_RESPONSE"
+    },
+    {
+      "file": "question_26.png",
+      "reason": "NO_RESPONSE"
+    },
+    {
+      "file": "question_27.png",
+      "reason": "NO_RESPONSE"
+    },
+    {
+      "file": "question_28.png",
+      "reason": "NO_RESPONSE"
+    },
+    {
+      "file": "question_29.png",
+      "reason": "NO_RESPONSE"
+    },
+    {
+      "file": "question_30.png",
+      "reason": "NO_RESPONSE"
+    },
+    {
+      "file": "question_31.png",
+      "reason": "NO_RESPONSE"
+    },
+    {
+      "file": "question_32.png",
+      "reason": "NO_RESPONSE"
+    },
+    {
+      "file": "question_33.png",
+      "reason": "NO_RESPONSE"
+    },
+    {
+      "file": "question_34.png",
+      "reason": "NO_RESPONSE"
+    },
+    {
+      "file": "question_35.png",
+      "reason": "NO_RESPONSE"
+    },
+    {
+      "file": "question_36.png",
+      "reason": "NO_RESPONSE"
+    },
+    {
+      "file": "question_37.png",
+      "reason": "NO_RESPONSE"
+    },
+    {
+      "file": "question_38.png",
+      "reason": "NO_RESPONSE"
+    },
+    {
+      "file": "question_39.png",
+      "reason": "NO_RESPONSE"
+    },
+    {
+      "file": "question_40.png",
+      "reason": "NO_RESPONSE"
+    },
+    {
+      "file": "question_41.png",
+      "reason": "NO_RESPONSE"
+    },
+    {
+      "file": "question_42.png",
+      "reason": "NO_RESPONSE"
+    },
+    {
+      "file": "question_43.png",
+      "reason": "NO_RESPONSE"
+    },
+    {
+      "file": "question_44.png",
+      "reason": "NO_RESPONSE"
+    },
+    {
+      "file": "question_45.png",
+      "reason": "NO_RESPONSE"
+    },
+    {
+      "file": "question_46.png",
+      "reason": "NO_RESPONSE"
+    },
+    {
+      "file": "question_47.png",
+      "reason": "NO_RESPONSE"
+    },
+    {
+      "file": "question_48.png",
+      "reason": "NO_RESPONSE"
+    },
+    {
+      "file": "question_49.png",
+      "reason": "NO_RESPONSE"
+    },
+    {
+      "file": "question_50.png",
+      "reason": "NO_RESPONSE"
+    }
+  ]
+}

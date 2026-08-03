@@ -48,7 +48,7 @@ A modular, end-to-end screen-reading AI assistant that captures a local display 
 │      ├── requirements.txt         # Python deps                  │
 │      ├── main.py                  # Client entry point           │
 │      ├── capture_agent.py         # Core capture logic           │
-│      ├── gemini_client.py         # Gemini/OpenRouter API client │
+│      ├── openrouter_client.py     # OpenRouter LLM API client    │
 │      ├── lens_client.py           # Google Lens OCR (free)       │
 │      ├── rag_search.py            # RAG knowledge base search    │
 │      ├── mock_responder.py        # Mock responses for dev       │
@@ -214,7 +214,7 @@ Add environment variables in Vercel Dashboard:
 | `OPENROUTER_API_KEY` | Yes | Your OpenRouter API key |
 | `APP_SECRET_KEY` | Yes | Shared secret (32+ chars), generate with `openssl rand -hex 32` |
 | `OPENROUTER_BASE_URL` | No | Default: `https://openrouter.ai/api/v1` |
-| `OPENROUTER_MODEL` | No | Default: `google/gemini-2.0-flash-exp:free` |
+| `OPENROUTER_MODEL` | No | Default: `google/gemini-3.5-flash-lite` |
 | `OPENROUTER_REFERER` | No | Your Vercel app URL |
 | `OPENROUTER_TITLE` | No | App name for OpenRouter |
 | `NEXT_PUBLIC_APP_URL` | No | Public app URL |
@@ -272,7 +272,7 @@ Server-Sent Events endpoint for real-time dashboard updates.
 |----------|----------|-------------|
 | `OPENROUTER_API_KEY` | Yes | Your OpenRouter API key |
 | `APP_SECRET_KEY` | Yes | Shared secret (32+ chars) |
-| `OPENROUTER_MODEL` | No | Default: `google/gemini-2.0-flash-exp:free` |
+| `OPENROUTER_MODEL` | No | Default: `google/gemini-3.5-flash-lite` |
 | `OPENROUTER_REFERER` | No | Your app URL for OpenRouter |
 | `OPENROUTER_TITLE` | No | App name for OpenRouter |
 
@@ -302,7 +302,7 @@ Server-Sent Events endpoint for real-time dashboard updates.
 | `deduplicationEnabled` | `false` | Skip near-identical images |
 | `deduplicationThreshold` | `0.95` | pHash similarity threshold (0-1) |
 | `mock` | `false` | Use canned responses (no API cost) |
-| `lensEnabled` | `false` | Use Google Lens OCR → Gemini text-only (cheap) |
+| `lensEnabled` | `false` | Use Google Lens OCR → LLM text-only (cheap) |
 | `openrouterApiKey` | *(required when mock=false)* | OpenRouter API key |
 | `openrouterModel` | `google/gemini-3.5-flash-lite` | Model for analysis |
 | `openrouterBaseUrl` | `https://openrouter.ai/api/v1` | OpenRouter API base URL |
@@ -333,7 +333,7 @@ cd local-client && pip install -r requirements.txt     # Install Python deps
 
 ## Free Tier Limits
 
-- **OpenRouter**: Free models only (Gemini Flash, etc.)
+- **OpenRouter**: Free models only
 - **Rate Limits**: ~20 requests/minute on free tier
 - **Vercel Hobby**: 100GB bandwidth, 100GB-hours serverless
 - **Local Client**: No cloud costs, runs on your Windows machine

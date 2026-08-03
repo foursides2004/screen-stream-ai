@@ -5,14 +5,14 @@
 - **Screen Capture**: `mss` (cross-platform) for high-performance screen capture
 - **Image Encoding**: `Pillow` (PIL) for JPEG/WebP encoding
 - **OCR**: `chrome-lens-py` (Google Lens API, free, no API key)
-- **Networking**: `requests` for HTTP (Gemini API + Vercel API)
+- **Networking**: `requests` for HTTP (OpenRouter API + Vercel API)
 - **Hotkeys**: `pynput` for global keyboard listener (cross-platform)
 - **Window Capture**: `pygetwindow` (Windows) or `pyobjc-framework-Quartz` (macOS)
 - **Packaging**: `pip install -r requirements.txt`
 
 ## Key Files
 - `capture_agent.py` — Main capture agent with Config, ScreenCapture, APIClient, HotkeyManager, CaptureAgent classes
-- `gemini_client.py` — Gemini API client with `analyze()` (image) and `analyze_text()` (text-only) methods
+- `openrouter_client.py` — OpenRouter LLM API client with `analyze()` (image) and `analyze_text()` (text-only) methods
 - `lens_client.py` — Google Lens OCR client (free, no API key — uses chrome-lens-py)
 - `rag_search.py` — RAG (Retrieval-Augmented Generation) keyword search over knowledge base
 - `mock_responder.py` — Mock response generator for development (returns valid Q&A format)
@@ -54,12 +54,12 @@
 ### Lens OCR Mode (`"lensEnabled": true`)
 1. **Google Lens OCR** extracts text from screenshot (free, no API key)
 2. **RAG** searches knowledge base for relevant documentation
-3. **Gemini text-only** answers from extracted text + RAG context (cheap — no image tokens)
+3. **LLM text-only** answers from extracted text + RAG context (cheap — no image tokens)
 
 Falls back to image analysis if OCR fails.
 
 ### Full Image Mode (default)
-- Sends screenshot as base64 image to Gemini via OpenRouter
+- Sends screenshot as base64 image to LLM via OpenRouter
 - Most tokens, most accurate
 - RAG context still injected when `ragEnabled: true`
 
@@ -79,7 +79,7 @@ The parser resolves labels to content using the choices array.
 - Syncs to Vercel backend on startup
 - Tracks seen count, timestamps, domain
 
-## Gemini / OpenRouter Config
+## OpenRouter Config
 ```json
 {
   "mock": false,

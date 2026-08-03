@@ -1,6 +1,6 @@
 """
-Gemini API client — calls OpenRouter directly from the Python client.
-Uses the same prompt and model as the Vercel /api/analyze endpoint.
+OpenRouter API client — calls LLM models directly from the Python client.
+Uses the same prompt as the Vercel /api/analyze endpoint.
 """
 
 from __future__ import annotations
@@ -58,8 +58,8 @@ EXAMPLES OF BAD RESPONSES:
 USER_PROMPT = "Read the questions on this screen and provide the correct answer(s) for each one. If there are multiple questions, answer all of them."
 
 
-class GeminiClient:
-    """Calls Gemini via OpenRouter API directly from the Python client."""
+class OpenRouterClient:
+    """Calls LLM models via OpenRouter API directly from the Python client."""
 
     def __init__(self, api_key: str, model: str, base_url: str):
         self.api_key = api_key
@@ -68,7 +68,7 @@ class GeminiClient:
         self.session = requests.Session()
 
     def analyze_text(self, text: str, domain: str = "", timeout: int = 30) -> Optional[str]:
-        """Call Gemini with extracted text (no image). Much cheaper than image analysis.
+        """Call LLM with extracted text (no image). Much cheaper than image analysis.
 
         Args:
             text: Extracted text from OCR
@@ -125,33 +125,33 @@ class GeminiClient:
 
         try:
             url = f"{self.base_url}/chat/completions"
-            print(f"[GEMINI-TEXT] Calling {self.model} (text-only, no image)")
+            print(f"[OPENROUTER-TEXT] Calling {self.model} (text-only, no image)")
             response = self.session.post(url, json=payload, headers=headers, timeout=timeout)
 
             if response.status_code != 200:
-                print(f"[GEMINI-TEXT] API error {response.status_code}: {response.text[:500]}")
+                print(f"[OPENROUTER-TEXT] API error {response.status_code}: {response.text[:500]}")
                 return None
 
             data = response.json()
             content = data["choices"][0]["message"]["content"]
-            print(f"[GEMINI-TEXT] Got response ({len(content)} chars)")
+            print(f"[OPENROUTER-TEXT] Got response ({len(content)} chars)")
             return content
 
         except requests.exceptions.Timeout:
-            print("[GEMINI-TEXT] Request timeout")
+            print("[OPENROUTER-TEXT] Request timeout")
             return None
         except requests.exceptions.ConnectionError:
-            print("[GEMINI-TEXT] Connection error")
+            print("[OPENROUTER-TEXT] Connection error")
             return None
         except (KeyError, IndexError, json.JSONDecodeError) as e:
-            print(f"[GEMINI-TEXT] Failed to parse response: {e}")
+            print(f"[OPENROUTER-TEXT] Failed to parse response: {e}")
             return None
         except Exception as e:
-            print(f"[GEMINI-TEXT] Unexpected error: {e}")
+            print(f"[OPENROUTER-TEXT] Unexpected error: {e}")
             return None
 
     def analyze(self, image_data_url: str, domain: str = "", timeout: int = 30) -> Optional[str]:
-        """Call Gemini via OpenRouter and return the response text.
+        """Call LLM via OpenRouter and return the response text.
 
         Args:
             image_data_url: Base64 data URL (e.g., "data:image/webp;base64,...")
@@ -209,27 +209,27 @@ class GeminiClient:
 
         try:
             url = f"{self.base_url}/chat/completions"
-            print(f"[GEMINI] Calling {self.model} via {url}")
+            print(f"[OPENROUTER] Calling {self.model} via {url}")
             response = self.session.post(url, json=payload, headers=headers, timeout=timeout)
 
             if response.status_code != 200:
-                print(f"[GEMINI] API error {response.status_code}: {response.text[:500]}")
+                print(f"[OPENROUTER] API error {response.status_code}: {response.text[:500]}")
                 return None
 
             data = response.json()
             content = data["choices"][0]["message"]["content"]
-            print(f"[GEMINI] Got response ({len(content)} chars)")
+            print(f"[OPENROUTER] Got response ({len(content)} chars)")
             return content
 
         except requests.exceptions.Timeout:
-            print("[GEMINI] Request timeout")
+            print("[OPENROUTER] Request timeout")
             return None
         except requests.exceptions.ConnectionError:
-            print("[GEMINI] Connection error")
+            print("[OPENROUTER] Connection error")
             return None
         except (KeyError, IndexError, json.JSONDecodeError) as e:
-            print(f"[GEMINI] Failed to parse response: {e}")
+            print(f"[OPENROUTER] Failed to parse response: {e}")
             return None
         except Exception as e:
-            print(f"[GEMINI] Unexpected error: {e}")
+            print(f"[OPENROUTER] Unexpected error: {e}")
             return None

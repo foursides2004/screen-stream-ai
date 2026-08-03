@@ -12,11 +12,11 @@ Python Client                         Vercel Backend
    ELSE IF lensEnabled=true:
      a. Lens OCR extracts text (free, no API key)
      b. RAG: search knowledge base for relevant docs
-     c. Send text + RAG context to Gemini (text-only, cheap)
+     c. Send text + RAG context to LLM via OpenRouter (text-only, cheap)
    ELSE:
      Encode image to base64
      RAG: search knowledge base for relevant docs
-     Call Gemini via OpenRouter (image + context, more tokens)
+     Call LLM via OpenRouter (image + context, more tokens)
 3. Get response text
 4. Parse response for Q&A (parse_qa_from_response)
    - Resolves answer labels (A, B, C) to actual content text
@@ -27,8 +27,8 @@ Python Client                         Vercel Backend
 
 **Three analysis modes** (configured via `config.json`):
 - **`mock: true`** — Canned responses, zero API cost
-- **`lensEnabled: true`** — Google Lens OCR (free) → Gemini text-only (cheap). Avoids image tokens.
-- **Default** — Full image to Gemini via OpenRouter (most tokens, most accurate)
+- **`lensEnabled: true`** — Google Lens OCR (free) → LLM text-only (cheap). Avoids image tokens.
+- **Default** — Full image to LLM via OpenRouter (most tokens, most accurate)
 
 **RAG (Retrieval-Augmented Generation)**: Searches local knowledge base (`knowledge/{domain}/`) for relevant documentation and injects it into the system prompt. Enabled by default (`ragEnabled: true`).
 
@@ -36,12 +36,12 @@ Python Client                         Vercel Backend
 
 **Question databank**: 99 unique SFCC questions stored in `reviewer_databank.json`, synced to Vercel dashboard on startup.
 
-The Python client calls Gemini directly via OpenRouter (not through Vercel). Vercel serves as the dashboard and reviewer data store.
+The Python client calls LLM models directly via OpenRouter (not through Vercel). Vercel serves as the dashboard and reviewer data store.
 
 ## Security & Environment
 
 - **Never commit secrets**: All `.env*` files with real keys are gitignored
-- **OpenRouter Free Tier**: Use free models (e.g., `google/gemini-3.5-flash-lite`)
+- **OpenRouter Free Tier**: Use free models only
 - **OpenRouter Headers**: Always send `HTTP-Referer` and `X-Title` headers
 - **Local Only**: Python client runs on localhost only, no external exposure
 

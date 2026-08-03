@@ -29,7 +29,7 @@ from pynput import keyboard
 from pynput.keyboard import Key, Listener
 from reviewer_databank import ReviewerDatabank
 from parse_response import parse_qa_from_response
-from gemini_client import GeminiClient
+from openrouter_client import OpenRouterClient
 from mock_responder import MockResponder
 from lens_client import get_lens_client
 from platform_utils import (
@@ -564,7 +564,7 @@ class CaptureAgent:
         self.databank = ReviewerDatabank()
 
         # Gemini client (used when mock=false)
-        self.gemini_client = GeminiClient(
+        self.openrouter_client = OpenRouterClient(
             api_key=self.config.get("openrouterApiKey", ""),
             model=self.config.get("openrouterModel", "google/gemini-3.5-flash-lite"),
             base_url=self.config.get("openrouterBaseUrl", "https://openrouter.ai/api/v1"),
@@ -690,7 +690,7 @@ class CaptureAgent:
                 # Lens pipeline: OCR → text-only Gemini (no image tokens)
                 response = self._analyze_with_lens(img, domain, timeout)
             else:
-                response = self.gemini_client.analyze(data_url, domain, timeout=timeout)
+                response = self.openrouter_client.analyze(data_url, domain, timeout=timeout)
 
             if response:
                 print(f"[CAPTURE] Response: {response[:200]}...")
@@ -774,7 +774,7 @@ class CaptureAgent:
             print(f"[LENS] Text preview: {ocr_text[:200]}...")
 
             # Step 2: Send text to Gemini (text-only, no image)
-            response = self.gemini_client.analyze_text(ocr_text, domain, timeout=timeout)
+            response = self.openrouter_client.analyze_text(ocr_text, domain, timeout=timeout)
             return response
 
         except Exception as e:
