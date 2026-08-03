@@ -783,10 +783,18 @@ class CaptureAgent:
             lens = get_lens_client()
             ocr_text = lens.ocr_from_path(tmp_path)
 
-            if not ocr_text:
-                print("[LENS] OCR returned no text, falling back to image analysis")
+            if not ocr_text or len(ocr_text) < 50:
+                print(f"[LENS] OCR text too short ({len(ocr_text or '')} chars), falling back to image analysis")
                 data_url = self.capture.encode_image(img)
-                return self.gemini_client.analyze(data_url, domain, timeout=timeout)
+                return self.openrouter_client.analyze(data_url, domain, timeout=timeout)
+
+            # Check if OCR text looks like a question (has "?" or choice labels)
+            has_question = "?" in ocr_text or any(f"{c}." in ocr_text for c in "ABCDEFGHIJ")
+            if not has_question:
+                print(f"[LENS] OCR text doesn't look like a question, falling back to image analysis")
+                print(f"[LENS] Text preview: {ocr_text[:200]}...")
+                data_url = self.capture.encode_image(img)
+                return self.openrouter_client.analyze(data_url, domain, timeout=timeout)
 
             print(f"[LENS] OCR extracted {len(ocr_text)} chars")
             print(f"[LENS] Text preview: {ocr_text[:200]}...")
@@ -798,7 +806,7 @@ class CaptureAgent:
         except Exception as e:
             print(f"[LENS] Pipeline error: {e}, falling back to image analysis")
             data_url = self.capture.encode_image(img)
-            return self.gemini_client.analyze(data_url, domain, timeout=timeout)
+            return self.openrouter_client.analyze(data_url, domain, timeout=timeout)
 
         finally:
             if tmp_path and os.path.exists(tmp_path):
