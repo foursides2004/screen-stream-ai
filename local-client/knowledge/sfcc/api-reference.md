@@ -10,6 +10,12 @@ OrderMgr.queryOrders(selector: String, sorting?: SortString, pagination?: Pagina
 - Always call `.close()` on the iterator when done
 - Example: `var orders = OrderMgr.queryOrders("status={2}", "creationDate DESC");`
 
+**Valid variable declarations for queryOrders:**
+- `var orderList : SeekableIterator = dw.order.OrderMgr.queryOrders(queryAttributes, sortString);` ✓
+- `var orderList = dw.order.OrderMgr.queryOrders(queryAttributes, sortString);` ✓
+- `var orderList : Collection = dw.order.OrderMgr.queryOrders(...);` ✗ (wrong type)
+- `var orderList : Iterator = dw.order.OrderMgr.queryOrders(...);` ✗ (wrong type, it's SeekableIterator not Iterator)
+
 ### getOrder
 ```javascript
 OrderMgr.getOrder(orderNo: String): Order

@@ -14,6 +14,11 @@
 - Calls another pipeline and does **NOT return**
 - Like a redirect — execution continues in the called pipeline only
 
+**Common exam question: "What is the difference between a jump node and a call node?"**
+- Call node: returns to calling pipeline after execution
+- Jump node: does NOT return to calling pipeline
+- Correct answer: "Workflow does not return to the calling pipeline" (describes jump node behavior)
+
 ## Pipeline vs Controller (SFRA)
 
 Modern SFCC uses controllers instead of pipelines:

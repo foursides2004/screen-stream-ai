@@ -9,7 +9,14 @@ Campaign qualifiers determine when a campaign is applicable. Valid qualifiers:
 3. **Order Total** — Order meets minimum/maximum total thresholds
 4. **Customer Groups** — Customer belongs to specific customer segments
 
-All four are valid campaign qualifiers in SFCC.
+**All four are valid campaign qualifiers in SFCC.**
+
+**Common exam question: "Which of the following are campaign qualifiers?"**
+- Coupon code ✓
+- Source Code ✓
+- Order Total ✓
+- Customer Groups ✓
+- All of the above ✓
 
 ## Campaign Structure
 
