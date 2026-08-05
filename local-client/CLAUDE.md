@@ -29,6 +29,16 @@ Answer order may be randomized between sessions, so content text is always store
 - **NEVER hardcode exam answers** — only factual documentation
 - Knowledge base files: method signatures, return types, parameter descriptions, syntax examples
 
+## Multi-Domain Knowledge Base
+Knowledge base lives in `knowledge/<domain>/` as markdown files. Currently supported:
+- **SFCC** (`knowledge/sfcc/`): 9 files — API reference, promotions, orders, customers, etc.
+- **RPA** (`knowledge/rpa/`): Core concepts, components, tools/platforms
+- **Blue Prism** (`knowledge/blueprism/`): Architecture, Process/Object Studio, work queues, credentials
+- **JavaScript** (`knowledge/javascript/`): Core JS, Angular, TypeScript, Node.js
+
+Switch domain in `config.json` → `"domain": "SFCC"` / `"RPA"` / `"blueprism"` / `"javascript"`.
+The RAG system loads `knowledge/<domain>/` and searches by keyword matching on `##` headers.
+
 ## Hotkeys
 
 ### Windows
